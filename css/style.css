@@ -1,0 +1,40 @@
+:root {
+    --color-bg: #CAD2C5;
+    /*  Main background */
+    --color-surface: #84A98C;
+    /*  Card/background section */
+    --color-primary: #52796F;
+    /*  Buttons, links, hover */
+    --color-text: #354F52;
+    /*  Normal text */
+    --color-title: #2F3E46;
+    /*  Headings or navbar */
+}
+
+/* Basic color layout for a website */
+
+body {
+    background-color: var(--color-bg);
+    color: #222;
+    margin: 0;
+    padding: 0;
+
+}
+
+.title-container {
+    background-color: var(--color-title);
+    font-family: "Copperplate Gothic", "Copperplate", fantasy;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+footer {
+    background-color: var(--color-title);
+    color: white;
+    padding: 2px;
+    text-align: center;
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+}
