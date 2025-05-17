@@ -1,3 +1,4 @@
+
 /* I learnt something new today, CSS can have variables, they are like normal variables
 but they are defined in the root element and can be used anywhere in the CSS file.
 */
@@ -50,62 +51,36 @@ body::before {
 .sideNavBar {
     background-color: var(--color-surface);
     color: var(--color-text);
-    width: 250px;
+    padding: 20px;
+    width: 0px;
     height: 100vh;
     overflow-x: hidden;
     position: fixed;
     box-shadow: 0 0px 20px rgba(0, 0, 0, 0.5);
-    z-index: 9;
+    z-index: 1;
     transition: 0.5s;
-
+    
 }
 
-.sideNavBar a {
 
+.sideNavBar ul li a {
     color: var(--color-text);
     text-decoration: none;
+    padding: 10px;
     font-size: 20px;
     display: block;
-    opacity: 0.2s;
-    padding: 20px;
-
+    transition: 0.3s;
 }
 
-
-.sideNavBar a:hover {
-    background-color: var(--color-primary);
-    color: white;
-    box-shadow: 0 0px 20px rgba(0, 0, 0, 0.5);
-}
-
-.sideNavBar a.active {
+.sideNavBar ul li a:hover {
     background-color: var(--color-primary);
     color: white;
 }
 
-.sideNavBar #closeBtn {
-    position: relative;
-    left: 220px;
-    top: 10px;
-    width: 30px;
-}
-
-.sideNavBar #closeBtn a {
-    color: var(--color-text);
-    text-decoration: none;
-    font-size: 30px;
-    display: contents;
-    transition: 0.2s;
-    padding: 0px;
-
-}
-
-.sideNavBar #closeBtn a:hover {
+.sideNavBar ul li a.active {
     background-color: var(--color-primary);
     color: white;
-
 }
-
 
 .sideNavBar h3 {
     color: var(--color-title);
@@ -113,8 +88,27 @@ body::before {
     text-align: center;
 }
 
+.sideNavBar ul {
+    list-style-type: none;
+    padding: 0;
+}
 
+#closeBtn {
+  position: relative;
+  left: 200px;
+  top: 5px;
+  
+}
 
+#closeBtn a {
+    font-size: 50px;
+}
+
+#closeBtn a:hover {
+    background-color: var(--color-primary);
+    color: white;
+    
+}
 
 .title-container {
     background-color: var(--color-title);
@@ -123,28 +117,6 @@ body::before {
     padding: 20px;
     text-align: center;
     box-shadow: 0 0px 20px rgba(0, 0, 0, 0.5);
-}
-
-#openBtn {
-    font-size: 30px;
-    position: absolute;
-    top: 20px;
-    left: 20px;
-}
-
-#openBtn a {
-    color: white;
-    text-decoration: none;
-}
-
-#openBtn a:hover {
-    background-color: var(--color-primary);
-    color: white;
-    transition: 0.5s;
-    padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 0px 20px rgba(0, 0, 0, 0.5);
-
 }
 
 footer {
