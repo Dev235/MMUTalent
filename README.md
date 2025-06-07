@@ -3,3 +3,5 @@
 - There is 2 table for this one is users another one is faq
 
 **To try it out**
+1) Access the index.php to try out the Login and New User Registration page
+2) Access faq.php to try out the feedback form.
