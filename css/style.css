@@ -152,7 +152,7 @@ footer {
     color: white;
     padding: 2px;
     text-align: center;
-    position: fixed;
+    position: static;
     bottom: 10px;
     width: 100%;
 }
@@ -334,4 +334,15 @@ footer {
 .registration-success-inside .form-button:hover {
     background-color: #218838;
 }
+
+/* Optional: style the FAQ cards */
+.faq-card {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+}
+
+
+
 
