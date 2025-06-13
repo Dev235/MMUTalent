@@ -7,4 +7,5 @@
 2) Access faq.php to try out the feedback form.
 
 13/6/2025
+- Edited registration.php (Enforced Password Policy)
 - Done manageFAQ (I combined with manageFeedback as well)
