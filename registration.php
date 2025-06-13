@@ -2,63 +2,64 @@
 require 'connection.php';
 $page_title = "Register";
 require 'header.php';
-require 'navbar.php';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = htmlspecialchars($_POST['name']);
-    $email = htmlspecialchars($_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $role = 'student';
-
-    $check = mysqli_prepare($conn, "SELECT email FROM users WHERE email = ?");
-    mysqli_stmt_bind_param($check, "s", $email);
-    mysqli_stmt_execute($check);
-    mysqli_stmt_store_result($check);
-
-    if (mysqli_stmt_num_rows($check) > 0) {
-        echo "<p style='color: red;'>Email is already registered.</p>";
-    } else {
-        $stmt = mysqli_prepare($conn, "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, "ssss", $name, $email, $password, $role);
-        if (mysqli_stmt_execute($stmt)) {
-            // Output the form again with a success message at the bottom
-            $registered = true;
-        } else {
-            echo "<p style='color: red;'>Registration failed. Try again.</p>";
-        }
-    }
-}
 ?>
 
+<body> 
 <div class="register-container">
-    <h2>Register</h2>
+    <h2>Create an Account</h2>
 
-    <form method="POST">
-        <label>Name:</label><br>
-        <input type="text" name="name" required><br><br>
+    <?php
+    $registration_successful = false;
+    $error_message = '';
 
-        <label>Email:</label><br>
-        <input type="email" name="email" required><br><br>
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $name = trim($_POST['name']);
+        $email = trim($_POST['email']);
+        $password = $_POST['password'];
+        $confirm_password = $_POST['confirm_password'];
 
-        <label>Password:</label><br>
-        <input type="password" name="password" required><br><br>
+        if (strlen($password) < 8) {
+            $error_message = "Password must be at least 8 characters.";
+        } elseif ($password !== $confirm_password) {
+            $error_message = "Passwords do not match.";
+        } else {
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $role = 'student';
 
-        <input type="submit" value="Register" class="form-button">
+            $stmt = $conn->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("ssss", $name, $email, $hashed_password, $role);
 
-        <?php if (!empty($registered)): ?>
-            <div class="registration-success-inside">
-                <p>🎉 Registration successful! 🎉</p>
-                <button type="button" onclick="window.location.href='index.php'" class="form-button">
-                    Back to Login
-                </button>
-            </div>
+            if ($stmt->execute()) {
+                $registration_successful = true;
+            } else {
+                $error_message = "Registration failed. Please try again.";
+            }
+
+            $stmt->close();
+        }
+    }
+    ?>
+
+    <?php if ($registration_successful): ?>
+        <div class="registration-success">
+            <p>Registration successful!</p>
+            <a href="login.php" class="form-button">Back to Login</a>
+        </div>
+    <?php else: ?>
+        <?php if (!empty($error_message)): ?>
+            <p style="color: red; margin-bottom: 15px;"><?= $error_message ?></p>
         <?php endif; ?>
-    </form>
+
+        <form method="POST" action="">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <input type="password" name="password" placeholder="Password (min 8 characters)" required>
+            <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+            <input type="submit" value="Register" class="form-button">
+        </form>
+    <?php endif; ?>
 </div>
 
-
-
-
-
-
 <?php require 'footer.php'; ?>
+</body>
+</html> <!-- Also required to close the document -->
