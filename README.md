@@ -9,3 +9,4 @@
 13/6/2025
 - Edited registration.php (Enforced Password Policy)
 - Done manageFAQ (I combined with manageFeedback as well)
+- Done with Admins Announcements/Workshops
