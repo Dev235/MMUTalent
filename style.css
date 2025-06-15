@@ -1,0 +1,331 @@
+/* I learnt something new today, CSS can have variables, they are like normal variables
+but they are defined in the root element and can be used anywhere in the CSS file.
+*/
+
+:root {
+    --color-bg: #CAD2C5;
+    /*  Main background */
+    --color-surface: #84A98C;
+    /*  Card/background section */
+    --color-primary: #52796F;
+    /*  Buttons, links, hover */
+    --color-text: #354F52;
+    /*  Normal text */
+    --color-title: #2F3E46;
+    /*  Headings or navbar */
+}
+
+/* Basic color layout for a website */
+
+body {
+    background-image: url("../css/background/background_image_2.png");
+    background-color: var(--color-bg);
+    color: #222;
+    margin: 0;
+    padding: 0;
+
+}
+
+/* Basically the before keyword creates something 
+called a pseudo-element, which is an element 
+that doesn't exist in the DOM but can be styled. DOM is basically 
+the structure of HTML document */
+body::before {
+    content: "";
+    position: fixed;
+    background-image: url("../css/background/background_image_2.png");
+    background-size: cover;
+    top: 0;
+    left: 0;
+    /* vh is viewport height and vw is viewport width */
+    height: 100vh;
+    width: 100vw;
+    /* Z index is basically the layering of elements, imagine like negative
+    send to back and positive means send to front */
+    z-index: -1;
+    filter: blur(5px);
+}
+
+
+
+
+.title-container {
+    background-color: var(--color-title);
+    font-family: "Copperplate Gothic", "Copperplate", fantasy;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0px 20px rgba(0, 0, 0, 0.5);
+}
+
+#openBtn {
+    font-size: 30px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+#openBtn a {
+    color: white;
+    text-decoration: none;
+}
+
+#openBtn a:hover {
+    background-color: var(--color-primary);
+    color: white;
+    transition: 0.5s;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0px 20px rgba(0, 0, 0, 0.5);
+
+}
+
+footer {
+    background-color: var(--color-title);
+    color: white;
+    padding: 2px;
+    text-align: center;
+    position: static;
+    bottom: 10px;
+    width: 100%;
+}
+
+/* Full page center for login */
+.login-container {
+    height: 100vh; /* Full height of viewport */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    margin-left: 0 !important; /* override sidebar margin if exists */
+    padding: 40px;
+    box-sizing: border-box;
+    background-color: #f9f9f9;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    font-family: 'Bebas Neue', sans-serif;
+}
+
+.login-container form {
+    width: 100%;
+    max-width: 400px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+}
+
+.login-container input[type="email"],
+.login-container input[type="password"],
+.login-container input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.login-container input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-container input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* Centered registration page */
+.register-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    margin-left: 0 !important;
+    padding: 40px;
+    box-sizing: border-box;
+    background-color: #f9f9f9;
+}
+
+.register-container h2 {
+    margin-bottom: 20px;
+    font-family: 'Bebas Neue', sans-serif;
+}
+
+.register-container form {
+    width: 100%;
+    max-width: 500px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+}
+
+.register-container input,
+.register-container select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.register-container input[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.register-container input[type="submit"]:hover {
+    background-color: #218838;
+}
+
+/* Shared Form Button Style */
+.form-button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin: 0;
+}
+
+.form-button:hover {
+    background-color: #3b5f58;
+}
+
+.form-button + .form-button {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+/* Registration Success Message */
+.registration-success {
+    width: 100%;
+    max-width: 500px;
+    background-color: #fff;
+    padding: 20px;
+    margin-top: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.registration-success p {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    color: green;
+}
+
+.registration-success form {
+    margin-top: 10px;
+}
+
+.registration-success .form-button {
+    width: 100%;
+    background-color: #28a745;
+}
+
+.registration-success .form-button:hover {
+    background-color: #218838;
+}
+
+.registration-success-inside {
+    margin-top: 20px;
+    text-align: center;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+}
+
+.registration-success-inside p {
+    color: green;
+    margin-bottom: 10px;
+    font-size: 1.05em;
+}
+
+.registration-success-inside .form-button {
+    background-color: #28a745;
+}
+
+.registration-success-inside .form-button:hover {
+    background-color: #218838;
+}
+
+/* Optional: style the FAQ cards */
+.faq-card {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+}
+
+
+/* ───────── Sidebar Panel ───────── */
+.sideNavBar {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-x: hidden;
+    padding-top: 60px;
+    box-shadow: 0 0 20px rgba(0,0,0,.5);
+    z-index: 9;
+    transform: translateX(-100%);     /* stays hidden */
+    transition: transform 0.4s ease;
+}
+.sideNavBar.open {
+    transform: translateX(0);         /* slides in */
+}
+
+/* ───────── Sidebar Links ───────── */
+.sideNavBar a {
+    display: block;
+    padding: 20px;
+    font-size: 18px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: background-color 0.2s, color 0.2s;
+}
+.sideNavBar a:hover,
+.sideNavBar a.active {
+    background-color: var(--color-primary);
+    color: white;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* ───────── Close Button (×) ───────── */
+#closeBtn {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 44px !important;    /* ✅ this will enlarge the × */
+    color: var(--color-text);
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+#closeBtn:hover {
+    color: white;
+}
+
+
