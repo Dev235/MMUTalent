@@ -152,7 +152,197 @@ footer {
     color: white;
     padding: 2px;
     text-align: center;
-    position: fixed;
+    position: static;
     bottom: 10px;
     width: 100%;
 }
+
+/* Full page center for login */
+.login-container {
+    height: 100vh; /* Full height of viewport */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    margin-left: 0 !important; /* override sidebar margin if exists */
+    padding: 40px;
+    box-sizing: border-box;
+    background-color: #f9f9f9;
+}
+
+.login-container h2 {
+    margin-bottom: 20px;
+    font-family: 'Bebas Neue', sans-serif;
+}
+
+.login-container form {
+    width: 100%;
+    max-width: 400px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+}
+
+.login-container input[type="email"],
+.login-container input[type="password"],
+.login-container input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.login-container input[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-container input[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* Centered registration page */
+.register-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    margin-left: 0 !important;
+    padding: 40px;
+    box-sizing: border-box;
+    background-color: #f9f9f9;
+}
+
+.register-container h2 {
+    margin-bottom: 20px;
+    font-family: 'Bebas Neue', sans-serif;
+}
+
+.register-container form {
+    width: 100%;
+    max-width: 500px;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 15px rgba(0,0,0,0.1);
+}
+
+.register-container input,
+.register-container select {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.register-container input[type="submit"] {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.register-container input[type="submit"]:hover {
+    background-color: #218838;
+}
+
+/* Shared Form Button Style */
+.form-button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;
+    margin: 0;
+}
+
+.form-button:hover {
+    background-color: #3b5f58;
+}
+
+.form-button + .form-button {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+/* Registration Success Message */
+.registration-success {
+    width: 100%;
+    max-width: 500px;
+    background-color: #fff;
+    padding: 20px;
+    margin-top: 10px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.registration-success p {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    color: green;
+}
+
+.registration-success form {
+    margin-top: 10px;
+}
+
+.registration-success .form-button {
+    width: 100%;
+    background-color: #28a745;
+}
+
+.registration-success .form-button:hover {
+    background-color: #218838;
+}
+
+.registration-success-inside {
+    margin-top: 20px;
+    text-align: center;
+    padding-top: 10px;
+    border-top: 1px solid #ccc;
+}
+
+.registration-success-inside p {
+    color: green;
+    margin-bottom: 10px;
+    font-size: 1.05em;
+}
+
+.registration-success-inside .form-button {
+    background-color: #28a745;
+}
+
+.registration-success-inside .form-button:hover {
+    background-color: #218838;
+}
+
+/* Optional: style the FAQ cards */
+.faq-card {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+}
+
+
+
+
