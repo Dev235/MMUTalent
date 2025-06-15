@@ -50,7 +50,7 @@ body::before {
 .sideNavBar {
     background-color: var(--color-surface);
     color: var(--color-text);
-    width: 250px;
+    width: 0px;
     height: 100vh;
     overflow-x: hidden;
     position: fixed;
