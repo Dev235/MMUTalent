@@ -27,6 +27,7 @@ A dedicated page for users to add or update their personal information.
 Includes a form with fields for name, student ID, faculty, date of birth, and a textarea for the "About Me" section.
 Added profile picture upload functionality.
 Enhanced Security: The "Edit Profile" and talent management buttons on the dashboard will only appear if the logged-in user is viewing their own profile.
+
 2. Talent Management
 
 Created addTalent.php, editTalent.php, and viewTalent.php:
@@ -36,6 +37,7 @@ The dashboard displays all talents in a responsive three-column grid.
 Talent Detail Page:
 Clicking on a talent now leads to a dedicated viewTalent.php page showing its full details, image, and the profile of the user offering it.
 Added a dynamic "Back" button using JavaScript to return the user to their previous page (either the dashboard or a future catalogue page).
+
 3. Session-Based Shopping Cart
 
 Created shoppingCart.php and cart_logic.php:
@@ -49,6 +51,7 @@ Updated Navigation Bar (navbar.php):
 The main navigation now includes a link to the shopping cart.
 A red badge with the number of items in the cart appears when the cart is not empty.
 Links like "My Profile" and "Shopping Cart" now only appear if a user is logged in.
+
 4. Database Updates
 
 Modified users table: Added new columns (student_id, faculty, date_of_birth, about_me, profile_picture) to support the detailed user profiles.
