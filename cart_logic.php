@@ -14,6 +14,14 @@ if (!isset($_SESSION['cart'])) {
 
 // 1. Add item to cart
 if (isset($_POST['action']) && $_POST['action'] == 'add' && isset($_POST['talent_id'])) {
+    
+    // ** NEW: CHECK IF USER IS LOGGED IN **
+    if (!isset($_SESSION['user_id'])) {
+        // Redirect to login page if not logged in
+        header("Location: login.php?error=login_required");
+        exit();
+    }
+
     $talent_id = intval($_POST['talent_id']);
 
     // For this project, we'll assume a quantity of 1 for each talent/service.

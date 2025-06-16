@@ -35,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // --- Handle Profile Picture Upload ---
     $profile_picture_filename = $old_profile_picture; // Default to old picture
     if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
-        // ** UPDATED PATH **
         $upload_dir = 'images/uploads/profile_pictures/';
         if (!is_dir($upload_dir)) {
             mkdir($upload_dir, 0755, true);
@@ -45,13 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $file_type = $_FILES['profile_picture']['type'];
         
         if (in_array($file_type, $allowed_types)) {
-            // Create a unique filename to prevent overwriting.
             $new_filename = uniqid() . '-' . basename($_FILES['profile_picture']['name']);
             $upload_file = $upload_dir . $new_filename;
 
             if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $upload_file)) {
                 $profile_picture_filename = $new_filename;
-                // Delete the old picture if it exists
                 if (!empty($old_profile_picture) && file_exists($upload_dir . $old_profile_picture)) {
                     unlink($upload_dir . $old_profile_picture);
                 }
@@ -64,20 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // --- Handle Text Data Update ---
-    if (empty($message)) { // Proceed only if file upload was successful or not attempted
+    if (empty($message)) { 
         $name = trim($_POST['name']);
         $student_id = trim($_POST['student_id']);
         $faculty = trim($_POST['faculty']);
         $date_of_birth = trim($_POST['date_of_birth']);
         $about_me = trim($_POST['about_me']);
 
-        // Prepare the update statement
         $stmt = $conn->prepare("UPDATE users SET name = ?, student_id = ?, faculty = ?, date_of_birth = ?, about_me = ?, profile_picture = ? WHERE user_id = ?");
         $stmt->bind_param("ssssssi", $name, $student_id, $faculty, $date_of_birth, $about_me, $profile_picture_filename, $user_id);
 
         if ($stmt->execute()) {
-            $_SESSION['name'] = $name; // Update session name
-            // Redirect to dashboard on success
+            $_SESSION['name'] = $name;
             header("Location: userDashboard.php?status=success");
             exit();
         } else {
@@ -95,9 +90,8 @@ $user = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 // Determine the correct image source
-$profile_pic_src = DEFAULT_AVATAR_URL; // Default to URL
+$profile_pic_src = DEFAULT_AVATAR_URL; 
 if (!empty($user['profile_picture'])) {
-    // ** UPDATED PATH **
     $profile_pic_src = 'images/uploads/profile_pictures/' . htmlspecialchars($user['profile_picture']);
 }
 
@@ -112,7 +106,6 @@ if (!empty($user['profile_picture'])) {
             <p style="color: white;">Keep your talent profile up to date.</p>
         </div>
 
-        <!-- Edit Profile Form -->
         <div class="profile-form-container" style="max-width: 800px; margin: 30px auto; background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
             
             <?php if ($message): ?>
@@ -121,17 +114,14 @@ if (!empty($user['profile_picture'])) {
                 </div>
             <?php endif; ?>
 
-            <!-- Add enctype for file uploads -->
             <form method="POST" action="" enctype="multipart/form-data">
                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                    <!-- Profile Picture Uploader -->
                     <div class="profile-pic-container" style="margin-right: 20px; text-align: center;">
                         <img src="<?php echo $profile_pic_src; ?>" alt="Profile Picture" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #ccc;">
                         <label for="profile_picture" style="display: block; margin-top: 10px;">Change Photo:</label>
                         <input type="file" id="profile_picture" name="profile_picture" accept="image/*" style="font-size: 0.9em;">
                     </div>
 
-                    <!-- Basic Info Fields -->
                     <div style="flex-grow: 1;">
                         <label for="name">Full Name:</label>
                         <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
@@ -142,7 +132,15 @@ if (!empty($user['profile_picture'])) {
                 </div>
 
                 <label for="faculty">Faculty:</label>
-                <input type="text" id="faculty" name="faculty" value="<?php echo htmlspecialchars($user['faculty'] ?? ''); ?>" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                <select id="faculty" name="faculty" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; background-color: white;">
+                    <option value="">-- Select Your Faculty --</option>
+                    <option value="FCI" <?php if (($user['faculty'] ?? '') == 'FCI') echo 'selected'; ?>>Faculty of Computing and Informatics (FCI)</option>
+                    <option value="FOE" <?php if (($user['faculty'] ?? '') == 'FOE') echo 'selected'; ?>>Faculty of Engineering (FOE)</option>
+                    <option value="FOM" <?php if (($user['faculty'] ?? '') == 'FOM') echo 'selected'; ?>>Faculty of Management (FOM)</option>
+                    <option value="FCA" <?php if (($user['faculty'] ?? '') == 'FCA') echo 'selected'; ?>>Faculty of Creative Arts (FCA)</option>
+                    <option value="FAC" <?php if (($user['faculty'] ?? '') == 'FAC') echo 'selected'; ?>>Faculty of Applied Communication (FAC)</option>
+                    <option value="FCM" <?php if (($user['faculty'] ?? '') == 'FCM') echo 'selected'; ?>>Faculty of Cinematic Arts (FCM)</option>
+                </select>
 
                 <label for="date_of_birth">Date of Birth:</label>
                 <input type="date" id="date_of_birth" name="date_of_birth" value="<?php echo htmlspecialchars($user['date_of_birth'] ?? ''); ?>" style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;">
@@ -150,14 +148,12 @@ if (!empty($user['profile_picture'])) {
                 <label for="about_me">About Me:</label>
                 <textarea id="about_me" name="about_me" rows="5" style="width: 100%; padding: 8px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px;"><?php echo htmlspecialchars($user['about_me'] ?? ''); ?></textarea>
 
-                <!-- Action Buttons -->
                 <div class="form-actions" style="display: flex; gap: 10px;">
                     <button type="submit" class="form-button" style="flex: 1; background-color: var(--color-primary);">Save Changes</button>
                     <a href="userDashboard.php" class="form-button" style="flex: 1; background-color: #6c757d; text-align: center; text-decoration: none; padding: 10px;">Cancel</a>
                 </div>
             </form>
         </div>
-
     </div>
 
     <?php require 'footer.php'; ?>

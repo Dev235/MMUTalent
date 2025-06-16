@@ -8,7 +8,7 @@ require 'navbar.php';
 $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
 ?>
 
-<div id="main-content" style="padding: 40px;">
+<div id="main-content" >
     <div class="title-container">
         <h1>News & Announcements</h1>
         <p style="color: white;">Stay updated with the latest talent events and workshops at MMU!</p>
