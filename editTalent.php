@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <body>
     <?php require 'navbar.php'; ?>
-    <div id="main-content" style="padding: 40px;">
+    <div id="main-content">
         <div class="title-container">
             <h1>Edit Talent</h1>
         </div>

@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && !empty($_POST['question'])) {
 $result = $conn->query("SELECT * FROM faq WHERE answer IS NOT NULL AND visible = 1 ORDER BY submitted_at DESC");
 ?>
 
-<div id="main-content" style="padding: 40px;">
+<div id="main-content">
     <div class="title-container">
         <h1>Frequently Asked Questions</h1>
     </div>

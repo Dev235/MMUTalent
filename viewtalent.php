@@ -57,7 +57,7 @@ if (!empty($talent['profile_picture']) && file_exists('images/uploads/profile_pi
 <body>
     <?php require 'navbar.php'; ?>
 
-    <div id="main-content" style="padding: 40px;">
+    <div id="main-content">
         <div class="title-container">
             <h1><?php echo htmlspecialchars($talent['service_title']); ?></h1>
         </div>
@@ -65,28 +65,32 @@ if (!empty($talent['profile_picture']) && file_exists('images/uploads/profile_pi
         <!-- Talent Detail Container -->
         <div class="talent-detail-container" style="max-width: 900px; margin: 30px auto; background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
             
-            <!-- ** MOVED JAVASCRIPT BACK BUTTON ** -->
             <a href="#" onclick="history.go(-1); return false;" class="form-button" style="width: auto; padding: 10px 20px; background-color: #6c757d; display: inline-block; margin-bottom: 20px;">&larr; Back</a>
             
-            <!-- Talent Image -->
             <img src="<?php echo $talent_image_src; ?>" alt="<?php echo htmlspecialchars($talent['service_title']); ?>" style="width: 100%; height: auto; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
 
-            <!-- Talent Description -->
             <section id="talent-description">
                 <h2 style="color: var(--color-title); border-bottom: 2px solid var(--color-surface); padding-bottom: 10px;">About this Talent</h2>
                 <p style="line-height: 1.6;">
                     <?php echo nl2br(htmlspecialchars($talent['service_description'])); ?>
                 </p>
             </section>
+            
+            <!-- ** ADD TO CART FORM ** -->
+            <section id="add-to-cart" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                 <form action="cart_logic.php" method="POST">
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="talent_id" value="<?php echo $talent_id; ?>">
+                    <button type="submit" class="form-button" style="width: 100%; background-color: var(--color-primary); font-size: 1.2em;">Add to Cart (RM 100.00)</button>
+                </form>
+            </section>
 
-            <!-- Talent Owner Info -->
             <section id="talent-owner" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
                 <h3 style="color: var(--color-title);">Offered By</h3>
                 <div class="owner-info" style="display: flex; align-items: center; gap: 15px;">
                     <img src="<?php echo $owner_avatar_src; ?>" alt="<?php echo htmlspecialchars($talent['user_name']); ?>" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover;">
                     <div>
                         <h4 style="margin: 0;"><?php echo htmlspecialchars($talent['user_name']); ?></h4>
-                        <!-- In the future, this could link to the user's public profile -->
                         <a href="userDashboard.php?id=<?php echo $talent['user_id']; ?>" style="font-size: 0.9em; color: var(--color-primary);">View Profile</a>
                     </div>
                 </div>

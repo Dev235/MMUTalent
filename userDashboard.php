@@ -78,9 +78,9 @@ if (!empty($user['profile_picture'])) {
 ?>
 
 <body>
-    <?php require 'navbar.php'; ?>
 
-    <div id="main-content" style="padding: 40px;">
+    <?php require 'navbar.php'; ?>
+    <div id="main-content" style="">
         <div class="title-container">
             <h1>MMU GOT TALENT</h1>
             <p style="color: white;"><?php echo htmlspecialchars($user['name']); ?>'s Profile</p>
@@ -143,7 +143,8 @@ if (!empty($user['profile_picture'])) {
 
         </div>
 
-        <?php require 'footer.php'; ?>
+
     </div>
+            <?php require 'footer.php'; ?>
 </body>
 </html>
