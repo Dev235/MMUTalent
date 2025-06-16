@@ -10,3 +10,7 @@
 - Edited registration.php (Enforced Password Policy)
 - Done manageFAQ (I combined with manageFeedback as well)
 - Done with Admins Announcements/Workshops
+
+16/6/2025
+- Did talent management page
+- Profile Page
