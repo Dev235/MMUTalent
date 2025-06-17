@@ -43,7 +43,7 @@ require 'header.php';
     <?php if ($registration_successful): ?>
         <div class="registration-success">
             <p>Registration successful!</p>
-            <a href="index.php" class="form-button">Back to Login</a>
+            <a href="login.php" class="success-button" style="width:auto; display:inline-block;">Back to Login</a>
         </div>
     <?php else: ?>
         <?php if (!empty($error_message)): ?>
