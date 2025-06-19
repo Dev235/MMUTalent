@@ -17,6 +17,7 @@ $cart_item_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
     <a href="forum.php">Forum</a>
     <a href="faq.php">FAQ</a>
     <a href="announcement.php">Announcements</a>
+    <a href="about_us.php">About Us</a>
 
     <?php if (isset($_SESSION['user_id'])): ?>
         <!-- These links only show if the user IS logged in -->
