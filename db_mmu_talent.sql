@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 21, 2025 at 12:03 PM
+-- Generation Time: Jun 21, 2025 at 12:23 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -32,15 +32,9 @@ CREATE TABLE `announcements` (
   `title` varchar(255) NOT NULL,
   `content` text NOT NULL,
   `posted_by` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `image_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `announcements`
---
-
-INSERT INTO `announcements` (`id`, `title`, `content`, `posted_by`, `created_at`) VALUES
-(2, 'Testing123', '1234567dwadwa', NULL, '2025-06-13 13:50:51');
 
 -- --------------------------------------------------------
 
@@ -117,7 +111,6 @@ CREATE TABLE `services` (
 --
 
 INSERT INTO `services` (`service_id`, `user_id`, `service_title`, `service_description`, `service_image`, `service_price`) VALUES
-(2, 9, 'The Ultimate Copy Paster', 'I like copy pasting', '684f1823a4245-WhatsApp Image 2025-06-10 at 17.18.31_6d93164e.jpg', 0.00),
 (3, 9, 'Doom Player', 'I like playing doom', '684f1921d13d4-c7e71bc7-a14b-432e-933d-db5b54984f1b.jpg', 0.00),
 (5, 9, 'Gooner', 'Basically cum but better', '684f199f5c4d7-Screenshot 2024-08-13 211729.png', 0.00),
 (6, 11, 'Gooner', 'asdasdasda', '684f7af48882d-Screenshot 2024-09-20 234654.png', 0.00),
@@ -149,7 +142,8 @@ CREATE TABLE `transactions` (
 INSERT INTO `transactions` (`transaction_id`, `buyer_user_id`, `service_id`, `price_at_purchase`, `transaction_date`, `status`) VALUES
 (1, 15, 12, 20.00, '2025-06-21 09:12:45', 'completed'),
 (2, 15, 14, 150.00, '2025-06-21 09:35:46', 'completed'),
-(3, 15, 14, 150.00, '2025-06-21 09:36:53', 'completed');
+(3, 15, 14, 150.00, '2025-06-21 09:36:53', 'completed'),
+(4, 15, 14, 150.00, '2025-06-21 10:12:20', 'completed');
 
 -- --------------------------------------------------------
 
@@ -181,8 +175,6 @@ INSERT INTO `users` (`user_id`, `name`, `email`, `phone_number`, `password`, `ro
 (2, '123', '123@gmail.com', NULL, '$2y$10$IkcTItO5pLNP/L.Fhxi3buS.dbOJ9km9naFov71.2PYC1IhB9MEn.', 'student', '2025-06-06 14:08:41', NULL, NULL, NULL, NULL, 'default_avatar.png'),
 (3, '123', '12345@gmail.com', NULL, '$2y$10$DuYyTBb/XQTZCvfQbPgvP.Rh/akPn6o3AQpox1dSRyLA.9ux/1hzS', 'student', '2025-06-06 14:10:57', NULL, NULL, NULL, NULL, 'default_avatar.png'),
 (4, '12345', '123456@gmail.com', NULL, '$2y$10$QWKWTEYpdURoQk3I62kc0e2vkqUi1euEu1rGXwU8QMPVqPsGxq.Hm', 'student', '2025-06-06 14:19:30', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(5, '123', '123145124@1231', NULL, '$2y$10$EI5gPAUZf0KMfwtl.6ZMnOMNXaRq5ShG04rGlpgNkYeGTyEWFrtJa', 'student', '2025-06-06 14:20:40', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(6, '123', '1231231@dwad', NULL, '$2y$10$jLBGBUNCGaXaLVFqx.c2mOTufcj0dfP/gWC1zVKnB/uLP3W6aAKJ2', 'student', '2025-06-06 14:22:26', NULL, NULL, NULL, NULL, 'default_avatar.png'),
 (7, '12312312', '2313213@dswadw', NULL, '$2y$10$cP.L.DRXfxl1eC6w4ochMuGTl1/RCeKOeXQyHCwo2/bTMoAqn4D8a', 'student', '2025-06-06 14:23:43', NULL, NULL, NULL, NULL, 'default_avatar.png'),
 (8, 'Hong', 'Hong@gmail.com', NULL, '$2y$10$LTYu4zvX2lLoOORv/daD2.9M3dqAExa1RqW0CRn98hNsHI8CLN43C', 'student', '2025-06-13 12:17:34', NULL, NULL, NULL, NULL, 'default_avatar.png'),
 (9, 'Kalla Deveshwara Rao Rama Rao', '1211103169@student.mmu.edu.my', NULL, '$2y$10$GfukF3hpAXdRy85.98a5CuAc.UEOTZgGNg8eYdc4VDpX4bm0/e1sy', 'student', '2025-06-15 18:11:58', '1211103169', 'FCI', '2003-06-05', 'I like playing games', '684f15ca265f9-download.png'),
@@ -252,7 +244,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `announcements`
 --
 ALTER TABLE `announcements`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `faq`
@@ -282,7 +274,7 @@ ALTER TABLE `services`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `users`
