@@ -17,6 +17,7 @@ $cart_item_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
     <a href="faq.php">FAQ</a>
     <a href="announcement.php">Announcements</a>
     <a href="talentCatalogue.php">Catalogue</a>
+    <a href="aboutUs.php">Contact Us</a>
     
     <?php if (isset($_SESSION['user_id'])): ?>
         <?php if ($_SESSION['role'] === 'admin'): ?>
