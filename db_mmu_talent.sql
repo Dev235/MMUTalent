@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 21, 2025 at 09:01 AM
+-- Generation Time: Jun 21, 2025 at 12:03 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -130,6 +130,30 @@ INSERT INTO `services` (`service_id`, `user_id`, `service_title`, `service_descr
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `transactions`
+--
+
+CREATE TABLE `transactions` (
+  `transaction_id` int(11) NOT NULL,
+  `buyer_user_id` int(11) NOT NULL,
+  `service_id` int(11) NOT NULL,
+  `price_at_purchase` decimal(10,2) NOT NULL,
+  `transaction_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status` enum('pending','completed') NOT NULL DEFAULT 'pending'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `transactions`
+--
+
+INSERT INTO `transactions` (`transaction_id`, `buyer_user_id`, `service_id`, `price_at_purchase`, `transaction_date`, `status`) VALUES
+(1, 15, 12, 20.00, '2025-06-21 09:12:45', 'completed'),
+(2, 15, 14, 150.00, '2025-06-21 09:35:46', 'completed'),
+(3, 15, 14, 150.00, '2025-06-21 09:36:53', 'completed');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -137,6 +161,7 @@ CREATE TABLE `users` (
   `user_id` int(11) NOT NULL,
   `name` varchar(100) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
+  `phone_number` varchar(20) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
   `role` enum('student','admin') DEFAULT 'student',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -151,20 +176,20 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_id`, `name`, `email`, `password`, `role`, `created_at`, `student_id`, `faculty`, `date_of_birth`, `about_me`, `profile_picture`) VALUES
-(1, 'Hong', 'testing123@gmail.com', '$2y$10$8fWMK67x3jgBTYdml.KlKOChoAbUyO0lSgt1lxuXSH7LJZtT6Ff0S', 'student', '2025-06-06 13:32:04', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(2, '123', '123@gmail.com', '$2y$10$IkcTItO5pLNP/L.Fhxi3buS.dbOJ9km9naFov71.2PYC1IhB9MEn.', 'student', '2025-06-06 14:08:41', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(3, '123', '12345@gmail.com', '$2y$10$DuYyTBb/XQTZCvfQbPgvP.Rh/akPn6o3AQpox1dSRyLA.9ux/1hzS', 'student', '2025-06-06 14:10:57', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(4, '12345', '123456@gmail.com', '$2y$10$QWKWTEYpdURoQk3I62kc0e2vkqUi1euEu1rGXwU8QMPVqPsGxq.Hm', 'student', '2025-06-06 14:19:30', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(5, '123', '123145124@1231', '$2y$10$EI5gPAUZf0KMfwtl.6ZMnOMNXaRq5ShG04rGlpgNkYeGTyEWFrtJa', 'student', '2025-06-06 14:20:40', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(6, '123', '1231231@dwad', '$2y$10$jLBGBUNCGaXaLVFqx.c2mOTufcj0dfP/gWC1zVKnB/uLP3W6aAKJ2', 'student', '2025-06-06 14:22:26', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(7, '12312312', '2313213@dswadw', '$2y$10$cP.L.DRXfxl1eC6w4ochMuGTl1/RCeKOeXQyHCwo2/bTMoAqn4D8a', 'student', '2025-06-06 14:23:43', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(8, 'Hong', 'Hong@gmail.com', '$2y$10$LTYu4zvX2lLoOORv/daD2.9M3dqAExa1RqW0CRn98hNsHI8CLN43C', 'student', '2025-06-13 12:17:34', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(9, 'Kalla Deveshwara Rao Rama Rao', '1211103169@student.mmu.edu.my', '$2y$10$GfukF3hpAXdRy85.98a5CuAc.UEOTZgGNg8eYdc4VDpX4bm0/e1sy', 'student', '2025-06-15 18:11:58', '1211103169', 'FCI', '2003-06-05', 'I like playing games', '684f15ca265f9-download.png'),
-(11, 'Kalla Deveshwara Rao Rama Rao', 'crazydev2003@gmail.com', '$2y$10$JQoQ4JdsyDm2F4BgHwUh8OWHawWvPIKK/aDQjocSXZLnSMX2HJ5ES', 'admin', '2025-06-16 02:00:27', '1211104430', 'FCI', '2025-06-04', 'i like gay sex', '684f7ae8e269d-Screenshot 2024-08-13 211729.png'),
-(13, 'Kalla Deveshwara Rao', 'Kalladeveshwararao@gmail.com', '$2y$10$kSTmEQX3vhjgJjHQ5mlK4.XTQ1dYWfl/tHvbugImqPP8rIM/a8Fle', 'student', '2025-06-20 14:39:22', NULL, NULL, NULL, NULL, 'default_avatar.png'),
-(14, 'Sharvinthiran', 'sharvin@gmail.com', '$2y$10$3UjghEzlVVOqJNbQwkJnJeGRP13eIgNxjOmiMDasaH/SAZvM/vKlm', 'student', '2025-06-21 06:13:45', '1211103808', 'FCI', '2003-12-02', 'I like having sex with men', '68564dddb9e20-Screenshot 2025-06-19 025223.png'),
-(15, 'Kirtanah Manalan', 'kirtanah7@gmail.com', '$2y$10$FoExuNIeYFMMibEzq7E7G.wuEhrQMnCE3CZhaU.7VThjp07WvC9Y6', 'student', '2025-06-21 06:15:55', NULL, NULL, NULL, NULL, 'default_avatar.png');
+INSERT INTO `users` (`user_id`, `name`, `email`, `phone_number`, `password`, `role`, `created_at`, `student_id`, `faculty`, `date_of_birth`, `about_me`, `profile_picture`) VALUES
+(1, 'Hong', 'testing123@gmail.com', NULL, '$2y$10$8fWMK67x3jgBTYdml.KlKOChoAbUyO0lSgt1lxuXSH7LJZtT6Ff0S', 'student', '2025-06-06 13:32:04', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(2, '123', '123@gmail.com', NULL, '$2y$10$IkcTItO5pLNP/L.Fhxi3buS.dbOJ9km9naFov71.2PYC1IhB9MEn.', 'student', '2025-06-06 14:08:41', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(3, '123', '12345@gmail.com', NULL, '$2y$10$DuYyTBb/XQTZCvfQbPgvP.Rh/akPn6o3AQpox1dSRyLA.9ux/1hzS', 'student', '2025-06-06 14:10:57', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(4, '12345', '123456@gmail.com', NULL, '$2y$10$QWKWTEYpdURoQk3I62kc0e2vkqUi1euEu1rGXwU8QMPVqPsGxq.Hm', 'student', '2025-06-06 14:19:30', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(5, '123', '123145124@1231', NULL, '$2y$10$EI5gPAUZf0KMfwtl.6ZMnOMNXaRq5ShG04rGlpgNkYeGTyEWFrtJa', 'student', '2025-06-06 14:20:40', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(6, '123', '1231231@dwad', NULL, '$2y$10$jLBGBUNCGaXaLVFqx.c2mOTufcj0dfP/gWC1zVKnB/uLP3W6aAKJ2', 'student', '2025-06-06 14:22:26', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(7, '12312312', '2313213@dswadw', NULL, '$2y$10$cP.L.DRXfxl1eC6w4ochMuGTl1/RCeKOeXQyHCwo2/bTMoAqn4D8a', 'student', '2025-06-06 14:23:43', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(8, 'Hong', 'Hong@gmail.com', NULL, '$2y$10$LTYu4zvX2lLoOORv/daD2.9M3dqAExa1RqW0CRn98hNsHI8CLN43C', 'student', '2025-06-13 12:17:34', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(9, 'Kalla Deveshwara Rao Rama Rao', '1211103169@student.mmu.edu.my', NULL, '$2y$10$GfukF3hpAXdRy85.98a5CuAc.UEOTZgGNg8eYdc4VDpX4bm0/e1sy', 'student', '2025-06-15 18:11:58', '1211103169', 'FCI', '2003-06-05', 'I like playing games', '684f15ca265f9-download.png'),
+(11, 'Kalla Deveshwara Rao Rama Rao', 'crazydev2003@gmail.com', NULL, '$2y$10$JQoQ4JdsyDm2F4BgHwUh8OWHawWvPIKK/aDQjocSXZLnSMX2HJ5ES', 'admin', '2025-06-16 02:00:27', '1211104430', 'FCI', '2025-06-04', 'i like gay sex', '684f7ae8e269d-Screenshot 2024-08-13 211729.png'),
+(13, 'Kalla Deveshwara Rao', 'Kalladeveshwararao@gmail.com', NULL, '$2y$10$kSTmEQX3vhjgJjHQ5mlK4.XTQ1dYWfl/tHvbugImqPP8rIM/a8Fle', 'student', '2025-06-20 14:39:22', NULL, NULL, NULL, NULL, 'default_avatar.png'),
+(14, 'Sharvinthiran', 'sharvin@gmail.com', NULL, '$2y$10$3UjghEzlVVOqJNbQwkJnJeGRP13eIgNxjOmiMDasaH/SAZvM/vKlm', 'student', '2025-06-21 06:13:45', '1211103808', 'FCI', '2003-12-02', 'I like having sex with men', '68564dddb9e20-Screenshot 2025-06-19 025223.png'),
+(15, 'Kirtanah Manalan', 'kirtanah7@gmail.com', NULL, '$2y$10$FoExuNIeYFMMibEzq7E7G.wuEhrQMnCE3CZhaU.7VThjp07WvC9Y6', 'student', '2025-06-21 06:15:55', NULL, NULL, NULL, NULL, 'default_avatar.png');
 
 --
 -- Indexes for dumped tables
@@ -203,6 +228,14 @@ ALTER TABLE `forum_topics`
 ALTER TABLE `services`
   ADD PRIMARY KEY (`service_id`),
   ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `transactions`
+--
+ALTER TABLE `transactions`
+  ADD PRIMARY KEY (`transaction_id`),
+  ADD KEY `buyer_user_id` (`buyer_user_id`),
+  ADD KEY `service_id` (`service_id`);
 
 --
 -- Indexes for table `users`
@@ -246,6 +279,12 @@ ALTER TABLE `services`
   MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
+-- AUTO_INCREMENT for table `transactions`
+--
+ALTER TABLE `transactions`
+  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -273,6 +312,13 @@ ALTER TABLE `forum_topics`
 --
 ALTER TABLE `services`
   ADD CONSTRAINT `services_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `transactions`
+--
+ALTER TABLE `transactions`
+  ADD CONSTRAINT `transactions_ibfk_1` FOREIGN KEY (`buyer_user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `transactions_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `services` (`service_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
