@@ -55,7 +55,7 @@ $topics_result = $conn->query(
                             <td style="padding: 10px;"><?php echo htmlspecialchars($topic['author']); ?></td>
                             <td style="padding: 10px;"><?php echo date('Y-m-d', strtotime($topic['topic_date'])); ?></td>
                             <td style="padding: 10px; text-align: center;">
-                                <a href="../view_topic.php?id=<?php echo $topic['topic_id']; ?>" target="_blank">View Topic</a> |
+                                <a href="view_topic.php?id=<?php echo $topic['topic_id']; ?>" target="_blank">View Topic</a> |
                                 <a href="?action=delete&id=<?php echo $topic['topic_id']; ?>" onclick="return confirm('Are you sure you want to delete this entire topic and all its replies?');" style="color: red;">Delete</a>
                             </td>
                         </tr>
