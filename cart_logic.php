@@ -27,15 +27,16 @@ if (isset($_POST['action']) && $_POST['action'] == 'add' && isset($_POST['talent
     // For this project, we'll assume a quantity of 1 for each talent/service.
     // Check if the item is already in the cart
     if (!isset($_SESSION['cart'][$talent_id])) {
-        // Fetch talent details to store in the cart
-        $stmt = $conn->prepare("SELECT service_title as talent_title, 100.00 as price FROM services WHERE service_id = ?"); // Assuming a fixed price for now
+        // Fetch talent details to store in the cart, including service_price
+        // CHANGED: Fetching service_price from the database instead of hardcoding '100.00 as price'
+        $stmt = $conn->prepare("SELECT service_title, service_price FROM services WHERE service_id = ?"); 
         $stmt->bind_param("i", $talent_id);
         $stmt->execute();
         $result = $stmt->get_result();
         if ($item = $result->fetch_assoc()) {
             $_SESSION['cart'][$talent_id] = [
-                'title' => $item['talent_title'],
-                'price' => $item['price'],
+                'title' => $item['service_title'], // Use service_title
+                'price' => floatval($item['service_price']), // Use service_price and ensure it's a float
                 'quantity' => 1 // Quantity is always 1
             ];
         }

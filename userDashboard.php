@@ -6,7 +6,7 @@ session_start();
 require 'connection.php';
 
 // Define the URL for the default profile picture
-define('DEFAULT_AVATAR_URL', 'https://placehold.co/150x150/EFEFEF/AAAAAA&text=No+Image');
+// REMOVED: define('DEFAULT_AVATAR_URL', 'https://placehold.co/150x150/EFEFEF/AAAAAA&text=No+Image');
 
 // --- NEW LOGIC TO DETERMINE WHICH PROFILE TO SHOW ---
 $profile_user_id = null;
@@ -92,9 +92,13 @@ $page_title = htmlspecialchars($user['name']) . "'s Profile";
 require 'header.php';
 
 // Determine the correct image source for the profile picture
-$profile_pic_src = DEFAULT_AVATAR_URL; 
-if (!empty($user['profile_picture'])) {
+// UPDATED LOGIC: Use default_avatar.png if not empty AND file exists, otherwise use the placeholder
+$profile_pic_src = 'images/uploads/profile_pictures/default_avatar.png'; // Default local avatar
+if (!empty($user['profile_picture']) && file_exists('images/uploads/profile_pictures/' . $user['profile_picture'])) {
     $profile_pic_src = 'images/uploads/profile_pictures/' . htmlspecialchars($user['profile_picture']);
+} else if (!empty($user['profile_picture']) && !file_exists('images/uploads/profile_pictures/' . $user['profile_picture'])) {
+    // Fallback if the profile_picture entry exists but the file does not (e.g., deleted manually)
+    $profile_pic_src = 'images/uploads/profile_pictures/default_avatar.png';
 }
 ?>
 

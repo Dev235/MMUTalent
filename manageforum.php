@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../connection.php';
+require 'connection.php';
 
 // Security check
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
@@ -22,7 +22,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
 
 
 $page_title = "Manage Forum";
-require '../header.php';
+require 'header.php';
 
 // Fetch all forum topics
 $topics_result = $conn->query(
@@ -32,7 +32,7 @@ $topics_result = $conn->query(
 );
 ?>
 <body>
-    <?php require '../navbar.php'; ?>
+    <?php require 'navbar.php'; ?>
     <div id="main-content">
         <div class="title-container">
             <h1>Manage Forum Topics</h1>
@@ -64,6 +64,6 @@ $topics_result = $conn->query(
             </table>
         </div>
     </div>
-    <?php require '../footer.php'; ?>
+    <?php require 'footer.php'; ?>
 </body>
 </html>

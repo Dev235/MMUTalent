@@ -63,7 +63,7 @@ $unanswered_questions = $conn->query("SELECT * FROM faq WHERE answer IS NULL AND
 $unanswered_feedbacks = $conn->query("SELECT * FROM faq WHERE answer IS NULL AND type = 'feedback' ORDER BY submitted_at DESC");
 ?>
 
-<div id="main-content" style="padding: 40px;">
+<div id="main-content" style="">
     <div class="title-container">
         <h1>Manage FAQ</h1>
     </div>

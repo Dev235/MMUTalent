@@ -15,7 +15,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $talent_id = intval($_GET['id']);
 
 $stmt = $conn->prepare(
-    "SELECT s.service_title, s.service_description, s.service_image, u.name as user_name, u.profile_picture, u.user_id 
+    "SELECT s.service_title, s.service_description, s.service_image, s.service_price, u.name as user_name, u.profile_picture, u.user_id 
      FROM services s 
      JOIN users u ON s.user_id = u.user_id 
      WHERE s.service_id = ?"
@@ -75,17 +75,14 @@ if (!empty($talent['profile_picture']) && file_exists('images/uploads/profile_pi
                 </p>
             </section>
             
-            <!-- ** UPDATED ADD TO CART SECTION ** -->
             <section id="add-to-cart" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <!-- If logged in, show the Add to Cart button -->
                     <form action="cart_logic.php" method="POST">
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="talent_id" value="<?php echo $talent_id; ?>">
-                        <button type="submit" class="form-button" style="width: 100%; background-color: var(--color-primary); font-size: 1.2em;">Add to Cart (RM 100.00)</button>
+                        <button type="submit" class="form-button" style="width: 100%; background-color: var(--color-primary); font-size: 1.2em;">Add to Cart (RM <?php echo number_format($talent['service_price'], 2); ?>)</button>
                     </form>
                 <?php else: ?>
-                    <!-- If not logged in, show a login prompt -->
                     <div style="text-align: center; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
                         <p style="margin: 0; font-size: 1.1em;">You must be logged in to add items to your cart.</p>
                         <a href="login.php" class="form-button" style="width: auto; display: inline-block; margin-top: 15px; padding: 10px 30px;">Login to Continue</a>

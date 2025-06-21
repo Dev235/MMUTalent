@@ -16,6 +16,7 @@ $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $talent_title = trim($_POST['talent_title']);
     $talent_description = trim($_POST['talent_description']);
+    $talent_price = floatval($_POST['talent_price']); // Get the price
     $talent_image_filename = null;
 
     if (isset($_FILES['talent_image']) && $_FILES['talent_image']['error'] == 0) {
@@ -37,8 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($message)) {
         // The table is `services`, but we call it "talent" on the frontend.
-        $stmt = $conn->prepare("INSERT INTO services (user_id, service_title, service_description, service_image) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("isss", $user_id, $talent_title, $talent_description, $talent_image_filename);
+        // Updated INSERT query to include service_price
+        $stmt = $conn->prepare("INSERT INTO services (user_id, service_title, service_description, service_image, service_price) VALUES (?, ?, ?, ?, ?)");
+        $stmt->bind_param("isssd", $user_id, $talent_title, $talent_description, $talent_image_filename, $talent_price); // Added 'd' for double/float
 
         if ($stmt->execute()) {
             header("Location: userDashboard.php?status=talent_added");
@@ -67,6 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <label for="talent_description">Talent Description:</label>
                 <textarea id="talent_description" name="talent_description" rows="5" style="width: 100%; padding: 8px; margin-bottom: 10px;"></textarea>
+
+                <label for="talent_price">Price (RM):</label>
+                <input type="number" id="talent_price" name="talent_price" step="0.01" min="0" required value="0.00" style="width: 100%; padding: 8px; margin-bottom: 10px;">
 
                 <label for="talent_image">Talent Image:</label>
                 <input type="file" id="talent_image" name="talent_image" accept="image/*" style="display: block; margin-bottom: 20px;">

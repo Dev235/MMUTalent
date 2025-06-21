@@ -1,10 +1,10 @@
 <?php
 session_start();
-require '../connection.php';
+require 'connection.php';
 
 // Security check
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: ../login.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -24,13 +24,13 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
 
 
 $page_title = "Manage Users";
-require '../header.php';
+require 'header.php';
 
 // Fetch all users
 $users_result = $conn->query("SELECT user_id, name, email, role, created_at FROM users ORDER BY created_at DESC");
 ?>
 <body>
-    <?php require '../navbar.php'; ?>
+    <?php require 'navbar.php'; ?>
     <div id="main-content">
         <div class="title-container">
             <h1>Manage Users</h1>
@@ -57,7 +57,7 @@ $users_result = $conn->query("SELECT user_id, name, email, role, created_at FROM
                             <td style="padding: 10px;"><?php echo htmlspecialchars($user['role']); ?></td>
                             <td style="padding: 10px;"><?php echo date('Y-m-d', strtotime($user['created_at'])); ?></td>
                             <td style="padding: 10px; text-align: center;">
-                                <a href="../userDashboard.php?id=<?php echo $user['user_id']; ?>" target="_blank">View</a>
+                                <a href="userDashboard.php?id=<?php echo $user['user_id']; ?>" target="_blank">View</a>
                                 <?php if ($user['user_id'] !== $_SESSION['user_id']): // Can't delete self ?>
                                     | <a href="?action=delete&id=<?php echo $user['user_id']; ?>" onclick="return confirm('Are you sure you want to delete this user? This is irreversible.');" style="color: red;">Delete</a>
                                 <?php endif; ?>
@@ -68,6 +68,6 @@ $users_result = $conn->query("SELECT user_id, name, email, role, created_at FROM
             </table>
         </div>
     </div>
-    <?php require '../footer.php'; ?>
+    <?php require 'footer.php'; ?>
 </body>
 </html>

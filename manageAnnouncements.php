@@ -6,7 +6,7 @@ require 'navbar.php';
 
 $successMessage = "";
 
-/* Deletee */
+/* Delete */
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_announcement'])) 
 $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at DESC");
 ?>
 
-<div id="main-content" style="padding:40px;">
+<div id="main-content" style="">
     <div class="title-container"><h1>Manage Announcements</h1></div>
 
     <h2 style="color:white;margin-top:30px;">Add New Announcement</h2>
