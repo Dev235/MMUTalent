@@ -1,107 +1,161 @@
 <?php
 session_start();
-require 'connection.php';
+require 'connection.php'; // Path fixed
 
-// Security check
+// Security check: Ensure user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: login.php"); // Path fixed
     exit();
 }
 
-// Handle User Deletion
-$delete_success_message = '';
+$page_title = "Admin: Manage Users";
+require 'header.php'; // Path fixed
+
+// Get the ID of the currently logged-in admin
+$current_admin_id = $_SESSION['user_id'];
+$message = '';
+
+// Handle user deletion
 if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id'])) {
     $user_id_to_delete = intval($_GET['id']);
-    // Extra safety: prevent admin from deleting their own account from this interface
-    if ($user_id_to_delete !== $_SESSION['user_id']) {
-        $stmt = $conn->prepare("DELETE FROM users WHERE user_id = ?");
-        if ($stmt) {
-            $stmt->bind_param("i", $user_id_to_delete);
-            $stmt->execute();
-            if ($stmt->affected_rows > 0) {
-                $delete_success_message = "User deleted successfully.";
-            } else {
-                $delete_success_message = "User not found or could not be deleted.";
-            }
-            $stmt->close();
-        } else {
-            error_log("Failed to prepare statement for user deletion: " . $conn->error);
-            $delete_success_message = "Error preparing delete statement.";
-        }
+
+    // CRITICAL: Prevent admin from deleting their own account
+    if ($user_id_to_delete == $current_admin_id) {
+        $message = "Error: You cannot delete your own account.";
     } else {
-        $delete_success_message = "You cannot delete your own admin account from here.";
+        // **CORRECTED LOGIC**: Get the user's profile picture before deleting the user
+        $stmt_get_pic = $conn->prepare("SELECT profile_picture FROM users WHERE user_id = ?");
+        $stmt_get_pic->bind_param("i", $user_id_to_delete);
+        $stmt_get_pic->execute();
+        $result = $stmt_get_pic->get_result();
+        if ($user_to_delete = $result->fetch_assoc()) {
+            $pic_file = 'images/uploads/profile_pictures/' . $user_to_delete['profile_picture']; // Path fixed
+            if (!empty($user_to_delete['profile_picture']) && file_exists($pic_file)) {
+                unlink($pic_file); // Delete the actual image file
+            }
+        }
+        $stmt_get_pic->close();
+
+        // Proceed with deleting the user from the database
+        $stmt_delete_user = $conn->prepare("DELETE FROM users WHERE user_id = ?");
+        $stmt_delete_user->bind_param("i", $user_id_to_delete);
+        if ($stmt_delete_user->execute()) {
+            $message = "User deleted successfully.";
+        } else {
+            $message = "Error deleting user.";
+        }
+        $stmt_delete_user->close();
     }
-    // Redirect to clear GET parameters and display message
-    header("Location: manageUsers.php?status=" . urlencode($delete_success_message));
-    exit();
 }
 
-$page_title = "Manage Users";
-require 'header.php';
-
-// Fetch all users
-$users_result = $conn->query("SELECT user_id, name, email, phone_number, role, created_at FROM users ORDER BY created_at DESC"); // NEW: Fetch phone_number
-
-// Check for status message from redirect
-$status_message = '';
-if (isset($_GET['status'])) {
-    $status_message = htmlspecialchars($_GET['status']);
-}
-
+// Fetch all users from the database, including their profile picture
+$all_users = $conn->query("SELECT user_id, name, email, role, created_at, profile_picture FROM users ORDER BY created_at DESC");
 ?>
+
+<style>
+    /* Admin table styles */
+    .admin-table { width: 100%; border-collapse: collapse; background-color: white; }
+    .admin-table th, .admin-table td { padding: 12px; border: 1px solid #ddd; text-align: left; vertical-align: middle; }
+    .admin-table th { background-color: #f2f2f2; }
+    .admin-table .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .admin-table .actions a, .admin-table .actions .disabled-link {
+        margin-right: 10px;
+        text-decoration: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        color: white;
+        display: inline-block;
+    }
+    .admin-table .actions .edit-link { background-color: #ffc107; }
+    .admin-table .actions .delete-link { background-color: #dc3545; }
+    .admin-table .actions .disabled-link {
+        background-color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    .message-banner {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .message-success { background-color: #d4edda; color: #155724; }
+    .message-error { background-color: #f8d7da; color: #721c24; }
+</style>
+
 <body>
     <?php require 'navbar.php'; ?>
+
     <div id="main-content">
         <div class="title-container">
-            <h1>Manage Users</h1>
+            <h1>Manage All Users</h1>
         </div>
 
-        <?php if (!empty($status_message)): ?>
-            <div style="text-align:center; margin-top:20px;">
-                <p style="color: green; font-weight: bold; background-color: #d4edda; border: 1px solid #c3e6cb; display: inline-block; padding: 10px 20px; border-radius: 8px;">
-                    <?= $status_message ?>
-                </p>
-            </div>
-        <?php endif; ?>
+        <div class="admin-container" style="max-width: 1200px; margin: 30px auto;">
+            <?php if ($message): ?>
+                <div class="message-banner <?php echo (strpos($message, 'Error') !== false) ? 'message-error' : 'message-success'; ?>">
+                    <?php echo $message; ?>
+                </div>
+            <?php endif; ?>
 
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 20px; max-width: 1200px; margin: 30px auto 20px auto;">
-            <a href="addUser.php" class="form-button" style="width: auto; padding: 10px 20px; background-color: var(--color-primary);">+ Add New User</a>
-        </div>
-
-        <div class="table-container" style="max-width: 1200px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 10px;">
-            <table border="1" style="width: 100%; border-collapse: collapse;">
+            <table class="admin-table">
                 <thead>
-                    <tr style="background-color: #f2f2f2;">
-                        <th style="padding: 10px;">ID</th>
-                        <th style="padding: 10px;">Name</th>
-                        <th style="padding: 10px;">Email</th>
-                        <th style="padding: 10px;">Phone Number</th> <!-- NEW -->
-                        <th style="padding: 10px;">Role</th>
-                        <th style="padding: 10px;">Joined On</th>
-                        <th style="padding: 10px;">Actions</th>
+                    <tr>
+                        <th>Photo</th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined On</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($user = $users_result->fetch_assoc()): ?>
+                    <?php if ($all_users->num_rows > 0): ?>
+                        <?php while ($user = $all_users->fetch_assoc()): ?>
+                            <tr <?php if ($user['user_id'] == $current_admin_id) echo 'style="background-color: #e3f2fd;"'; ?>>
+                                <td>
+                                    <?php
+                                    $pic_path = 'images/uploads/profile_pictures/' . htmlspecialchars($user['profile_picture']); // Path fixed
+                                    if (!empty($user['profile_picture']) && file_exists($pic_path)) {
+                                        $img_src = $pic_path;
+                                    } else {
+                                        $img_src = 'https://placehold.co/50x50/EFEFEF/AAAAAA&text=...';
+                                    }
+                                    ?>
+                                    <img src="<?php echo $img_src; ?>" alt="<?php echo htmlspecialchars($user['name']); ?>" class="user-avatar">
+                                </td>
+                                <td><?php echo $user['user_id']; ?></td>
+                                <td><?php echo htmlspecialchars($user['name']); ?></td>
+                                <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                <td><?php echo htmlspecialchars($user['role']); ?></td>
+                                <td><?php echo date('F j, Y', strtotime($user['created_at'])); ?></td>
+                                <td class="actions">
+                                    <a href="editProfile.php?id=<?php echo $user['user_id']; ?>" class="edit-link">Edit</a> <!-- Path fixed -->
+                                    <?php if ($user['user_id'] == $current_admin_id): ?>
+                                        <span class="disabled-link" title="You cannot delete your own account.">Delete</span>
+                                    <?php else: ?>
+                                        <a href="?action=delete&id=<?php echo $user['user_id']; ?>" class="delete-link" onclick="return confirm('Are you sure you want to delete this user? This will also remove all their talents.');">Delete</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    <?php else: ?>
                         <tr>
-                            <td style="padding: 10px;"><?php echo $user['user_id']; ?></td>
-                            <td style="padding: 10px;"><?php echo htmlspecialchars($user['name']); ?></td>
-                            <td style="padding: 10px;"><?php echo htmlspecialchars($user['email']); ?></td>
-                            <td style="padding: 10px;"><?php echo htmlspecialchars($user['phone_number'] ?? 'N/A'); ?></td> <!-- NEW -->
-                            <td style="padding: 10px;"><?php echo htmlspecialchars($user['role']); ?></td>
-                            <td style="padding: 10px;"><?php echo date('Y-m-d', strtotime($user['created_at'])); ?></td>
-                            <td style="padding: 10px; text-align: center;">
-                                <a href="userDashboard.php?id=<?php echo $user['user_id']; ?>" target="_blank">View</a>
-                                <?php if ($user['user_id'] !== $_SESSION['user_id']): // Can't delete self ?>
-                                    | <a href="?action=delete&id=<?php echo $user['user_id']; ?>" onclick="return confirm('Are you sure you want to delete this user? This is irreversible.');" style="color: red;">Delete</a>
-                                <?php endif; ?>
-                            </td>
+                            <td colspan="7">No users found.</td>
                         </tr>
-                    <?php endwhile; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
+
     <?php require 'footer.php'; ?>
 </body>
 </html>

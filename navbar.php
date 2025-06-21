@@ -10,7 +10,14 @@ $cart_item_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 <span id="openBtn"><a href="#" onclick="openNavBar()">☰</a></span>
 <div class="sideNavBar">
     <div id="closeBtn"><a href="#" onclick="closeNavBar()">&times;</a></div>
-    <h3>Side Navigation Bar</h3>
+    <h3>    <?php if (isset($_SESSION['user_id'])): ?>
+        <!-- Display a welcome message if the user is logged in -->
+        <div style="padding: 10px 20px; text-align: center; color: var(--color-text); background-color: rgba(0,0,0,0.05);">
+            Hello, <strong><?php echo htmlspecialchars($_SESSION['name']); ?></strong>
+        </div>
+    <?php endif; ?></h3>
+    
+
     
     <a href="index.php">Home</a>
     <a href="forum.php">Forum</a>
@@ -29,6 +36,7 @@ $cart_item_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
             <a href="manageFAQ.php">Manage FAQ</a>
             <a href="manageCatalogue.php">Manage Catalogue</a>
         <?php else: ?>
+            <hr style="border-color: rgba(0,0,0,0.1);">
             <a href="userDashboard.php">My Profile</a>
             <a href="shoppingCart.php">
                 Shopping Cart 

@@ -115,19 +115,22 @@ $featured_talents = $conn->query(
     <?php require 'navbar.php'; ?>
 
     <div id="main-content">
-        <!-- The main title container can be removed or repurposed if the hero is enough -->
         <div class="title-container">
              <h1>MMU Talent</h1>
         </div>
         
-        <!-- New Hero Section -->
         <section class="hero-section">
             <h1>Discover & Showcase Your Talent</h1>
             <p>The ultimate platform for MMU students to connect, collaborate, and shine.</p>
-            <a href="registration.php" class="cta-button">Join Now & Get Discovered</a>
+            
+            <!-- **UPDATED LOGIC FOR CTA BUTTON** -->
+            <?php if (isset($_SESSION['user_id'])): ?>
+                <a href="talentCatalogue.php" class="cta-button">Browse Catalogue</a>
+            <?php else: ?>
+                <a href="registration.php" class="cta-button">Join Now & Get Discovered</a>
+            <?php endif; ?>
         </section>
 
-        <!-- New Featured Talents Section -->
         <section class="featured-section">
             <h2>Featured Talents</h2>
             <div class="featured-grid">

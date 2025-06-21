@@ -16,14 +16,14 @@ $members = [
         'name'       => 'Kalla Deveshwara Rao A/L Rama Rao',
         'student_id' => '1211103169',
         'section'    => 'TC1L',
-        'photo'      => 'images/xyz.jpg', // Replace with the correct path
+        'photo'      => 'images/dev.jpeg', // Replace with the correct path
         'email'      => '1211103169@student.mmu.edu.my',
     ],
     [
         'name'       => 'Darwin A/L Radhakrishnan',
         'student_id' => '1211104430',
         'section'    => 'TC1L',
-        'photo'      => 'images/xyz.jpg', // Replace with the correct path
+        'photo'      => 'images/darwin.jpeg', // Replace with the correct path
         'email'      => '1211104430@student.mmu.edu.my',
     ],
 ];
