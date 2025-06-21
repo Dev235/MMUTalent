@@ -15,10 +15,14 @@ if (!isset($_SESSION['cart'])) {
 // 1. Add item to cart
 if (isset($_POST['action']) && $_POST['action'] == 'add' && isset($_POST['talent_id'])) {
     
-    // ** NEW: CHECK IF USER IS LOGGED IN **
+    // ** NEW: CHECK IF USER IS LOGGED IN AND IS NOT AN ADMIN **
     if (!isset($_SESSION['user_id'])) {
         // Redirect to login page if not logged in
         header("Location: login.php?error=login_required");
+        exit();
+    } elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+        // Redirect if the user is an admin
+        header("Location: viewTalent.php?id=" . intval($_POST['talent_id']) . "&error=admin_cannot_add_to_cart");
         exit();
     }
 
@@ -30,17 +34,21 @@ if (isset($_POST['action']) && $_POST['action'] == 'add' && isset($_POST['talent
         // Fetch talent details to store in the cart, including service_price
         // CHANGED: Fetching service_price from the database instead of hardcoding '100.00 as price'
         $stmt = $conn->prepare("SELECT service_title, service_price FROM services WHERE service_id = ?"); 
-        $stmt->bind_param("i", $talent_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($item = $result->fetch_assoc()) {
-            $_SESSION['cart'][$talent_id] = [
-                'title' => $item['service_title'], // Use service_title
-                'price' => floatval($item['service_price']), // Use service_price and ensure it's a float
-                'quantity' => 1 // Quantity is always 1
-            ];
+        if ($stmt) {
+            $stmt->bind_param("i", $talent_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($item = $result->fetch_assoc()) {
+                $_SESSION['cart'][$talent_id] = [
+                    'title' => $item['service_title'], // Use service_title
+                    'price' => floatval($item['service_price']), // Use service_price and ensure it's a float
+                    'quantity' => 1 // Quantity is always 1
+                ];
+            }
+            $stmt->close();
+        } else {
+            error_log("Failed to prepare statement to fetch talent for cart: " . $conn->error);
         }
-        $stmt->close();
     }
     // Redirect back to the page the user was on
     header("Location: " . $_SERVER['HTTP_REFERER']);

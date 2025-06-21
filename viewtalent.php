@@ -52,6 +52,16 @@ if (!empty($talent['profile_picture']) && file_exists('images/uploads/profile_pi
     $owner_avatar_src = 'images/uploads/profile_pictures/' . htmlspecialchars($talent['profile_picture']);
 }
 
+// NEW: Check for error messages from redirects (e.g., admin trying to add to cart)
+$error_message = '';
+if (isset($_GET['error'])) {
+    if ($_GET['error'] == 'admin_cannot_add_to_cart') {
+        $error_message = "Administrators cannot add items to the shopping cart.";
+    } elseif ($_GET['error'] == 'login_required') {
+        $error_message = "You must be logged in to add items to your cart.";
+    }
+}
+
 ?>
 
 <body>
@@ -76,12 +86,29 @@ if (!empty($talent['profile_picture']) && file_exists('images/uploads/profile_pi
             </section>
             
             <section id="add-to-cart" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+                <?php if (!empty($error_message)): ?>
+                    <div style="text-align: center; background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                        <p style="margin: 0; font-size: 1.1em;"><?php echo $error_message; ?></p>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (isset($_SESSION['user_id'])): ?>
-                    <form action="cart_logic.php" method="POST">
-                        <input type="hidden" name="action" value="add">
-                        <input type="hidden" name="talent_id" value="<?php echo $talent_id; ?>">
-                        <button type="submit" class="form-button" style="width: 100%; background-color: var(--color-primary); font-size: 1.2em;">Add to Cart (RM <?php echo number_format($talent['service_price'], 2); ?>)</button>
-                    </form>
+                    <?php if ($_SESSION['user_id'] == $talent['user_id']): ?>
+                        <div style="text-align: center; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 1.1em; color: var(--color-title);">You cannot purchase your own talent.</p>
+                        </div>
+                    <?php elseif ($_SESSION['role'] === 'admin'): ?>
+                         <!-- Message displayed by the error_message check above -->
+                        <div style="text-align: center; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
+                            <p style="margin: 0; font-size: 1.1em; color: var(--color-title);">Administrators cannot use the shopping cart functionality.</p>
+                        </div>
+                    <?php else: ?>
+                        <form action="cart_logic.php" method="POST">
+                            <input type="hidden" name="action" value="add">
+                            <input type="hidden" name="talent_id" value="<?php echo $talent_id; ?>">
+                            <button type="submit" class="form-button" style="width: 100%; background-color: var(--color-primary); font-size: 1.2em;">Add to Cart (RM <?php echo number_format($talent['service_price'], 2); ?>)</button>
+                        </form>
+                    <?php endif; ?>
                 <?php else: ?>
                     <div style="text-align: center; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
                         <p style="margin: 0; font-size: 1.1em;">You must be logged in to add items to your cart.</p>

@@ -45,7 +45,7 @@ if (isset($_SESSION['user_id'])) {
                         $_SESSION['role'] = $user['role']; // Store user's role in session
                         
                         if ($user['role'] === 'admin') { // Redirect based on role
-                            header("Location: admin/adminDashboard.php");
+                            header("Location: adminDashboard.php");
                         } else {
                             header("Location: userDashboard.php");
                         }
