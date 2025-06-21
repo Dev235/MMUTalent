@@ -139,7 +139,7 @@ $members = [
             padding-right: 1rem;
         }
         .about-us-table td[data-label="Photo"]::before {
-           display: none; /* Hide the "Photo:" label on mobile */
+           display: none;
         }
     }
 </style>
@@ -166,6 +166,7 @@ $members = [
                 <tbody>
                 <?php foreach ($members as $m): ?>
                     <tr>
+                <!-- Adding our pictures here for about us page -->
                         <td data-label="Photo">
                             <figure>
                                 <img src="<?= htmlspecialchars($m['photo']) ?>"

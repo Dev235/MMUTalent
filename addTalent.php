@@ -1,4 +1,5 @@
 <?php
+// start the session and include the conn file
 session_start();
 require 'connection.php';
 
@@ -11,8 +12,11 @@ $page_title = "Add New Talent";
 require 'header.php';
 
 $user_id = $_SESSION['user_id'];
+
+// initialize the message variable
 $message = '';
 
+// If post is submitted, process the form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $talent_title = trim($_POST['talent_title']);
     $talent_description = trim($_POST['talent_description']);

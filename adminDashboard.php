@@ -13,13 +13,15 @@ $page_title = "Admin Dashboard";
 // We need to adjust the path to the header as well
 require 'header.php'; 
 
-// --- Fetch Total Sales Revenue ---
+//  Fetch Total Sales Revenue 
 $total_sales_query = $conn->query("SELECT SUM(price_at_purchase) AS total_revenue FROM transactions");
 $total_sales_result = $total_sales_query->fetch_assoc();
 $total_revenue = $total_sales_result['total_revenue'] ?? 0;
 
-// --- Fetch Top 3 Sales Revenue Per User (Seller) for Dashboard ---
+//  Fetch Top 3 Sales Revenue Per User (Seller) for Dashboard, dont want to overload the dashboard with too much data
 $top_sales_per_user_query = $conn->prepare(
+    // this is the query to get the top 3 sales per user
+    // it joins transactions, services, and users to get the total revenue per user
     "SELECT u.user_id, u.name AS seller_name, SUM(tr.price_at_purchase) AS user_total_revenue
      FROM transactions tr
      JOIN services s ON tr.service_id = s.service_id
@@ -116,7 +118,11 @@ if ($top_sales_per_user_query) {
             </div>
 
             <h3>Top 3 Talent Providers by Sales</h3>
-            <?php if ($top_sales_per_user_result && $top_sales_per_user_result->num_rows > 0): ?>
+
+            <?php
+            // getting the top 3 sales per user (seller) for the dashboard can refer above for the quuery
+             if ($top_sales_per_user_result && $top_sales_per_user_result->num_rows > 0): ?>
+
                 <table class="sales-table">
                     <thead>
                         <tr>
