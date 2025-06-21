@@ -2,7 +2,7 @@
 session_start();
 require 'connection.php';
 
-// Security check: Ensure user is logged in and is an admin
+// To see whether the user is logged in and has admin privileges
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
@@ -14,6 +14,8 @@ require 'header.php';
 $message = '';
 $message_type = ''; // 'success' or 'error'
 
+
+// POST from the form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
@@ -22,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirm_password = $_POST['confirm_password'];
     $role = $_POST['role']; // Get selected role
 
+    // Validating inputs tu je nothing much
     if (empty($name) || empty($email) || empty($phone_number) || empty($password) || empty($confirm_password) || empty($role)) {
         $message = "All fields are required.";
         $message_type = 'error';
@@ -81,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     border: 1px solid <?= $message_type == 'success' ? '#c3e6cb' : '#f5c6cb' ?>;">
                     <?php echo $message; ?>
                 </div>
+            <!-- Getting information about the user -->
             <?php endif; ?>
             <form method="POST" action="">
                 <label for="name">Full Name:</label>

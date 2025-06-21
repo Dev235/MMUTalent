@@ -1,8 +1,9 @@
 <?php
+// Standard la, start session first, we need to know if an admin is logged in.
 session_start();
 require 'connection.php';
 
-// Security check: Ensure user is logged in and is an admin
+// Security check, confirm must be admin. If not, cannot see this page one.
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
@@ -11,16 +12,17 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 $page_title = "All Transactions Report";
 require 'header.php';
 
-$records_per_page = 15;
+// --- Pagination stuff ---
+$records_per_page = 15; // How many sales to show per page.
 $current_page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($current_page - 1) * $records_per_page;
 
-// --- Handle Marking a Sale as Completed from this page ---
+// --- Handle 'Mark as Completed' button ---
 $status_message = '';
 if (isset($_GET['mark_as_completed'])) {
     $transaction_id_to_mark = intval($_GET['mark_as_completed']);
-    
-    // Admins can mark any transaction as completed, no user ownership check needed here
+
+    // For admin, we don't need to check who owns the talent. Admin got power to change any transaction status.
     $check_stmt = $conn->prepare(
         "SELECT transaction_id FROM transactions WHERE transaction_id = ? AND status = 'pending'"
     );
@@ -28,7 +30,7 @@ if (isset($_GET['mark_as_completed'])) {
         $check_stmt->bind_param("i", $transaction_id_to_mark);
         $check_stmt->execute();
         $check_stmt->store_result();
-        
+
         if ($check_stmt->num_rows > 0) {
             $update_stmt = $conn->prepare("UPDATE transactions SET status = 'completed' WHERE transaction_id = ?");
             if ($update_stmt) {
@@ -36,19 +38,12 @@ if (isset($_GET['mark_as_completed'])) {
                 $update_stmt->execute();
                 $update_stmt->close();
                 $status_message = "Order marked as completed!";
-            } else {
-                error_log("Failed to prepare statement for marking sale as completed: " . $conn->error);
-                $status_message = "Error marking order as completed.";
             }
-        } else {
-            $status_message = "Order not found or already completed.";
         }
         $check_stmt->close();
-    } else {
-        error_log("Failed to prepare statement for checking transaction status: " . $conn->error);
-        $status_message = "Database error during status check.";
     }
-    // Redirect to clear GET parameters and show message, maintaining current page for pagination and filters
+    // After updating, we redirect back to this same page. This is important to clear the URL parameters.
+    // We also pass back all the filter settings so the admin doesn't lose their search.
     $redirect_url = "adminTotalSales.php?page=" . $current_page;
     if (isset($_GET['talent_title'])) $redirect_url .= '&talent_title=' . urlencode($_GET['talent_title']);
     if (isset($_GET['buyer_name'])) $redirect_url .= '&buyer_name=' . urlencode($_GET['buyer_name']);
@@ -59,7 +54,7 @@ if (isset($_GET['mark_as_completed'])) {
     exit();
 }
 
-// Check for status message from redirect
+// Check for the success message from the redirect.
 if (isset($_GET['msg'])) {
     $status_message = htmlspecialchars($_GET['msg']);
 }
@@ -70,14 +65,14 @@ $search_buyer_name = isset($_GET['buyer_name']) ? trim($_GET['buyer_name']) : ''
 $search_seller_name = isset($_GET['seller_name']) ? trim($_GET['seller_name']) : '';
 $status_filter = isset($_GET['status_filter']) ? trim($_GET['status_filter']) : '';
 
-// Base query for counting total transactions (for pagination)
-$count_query_sql = "SELECT COUNT(*) AS total_transactions
-                    FROM transactions tr
-                    JOIN services s ON tr.service_id = s.service_id
-                    JOIN users bu ON tr.buyer_user_id = bu.user_id
-                    JOIN users se ON s.user_id = se.user_id";
+// --- This part is to build the SQL query dynamically based on the filters ---
+// The base query to get the total number of records that match the filter.
+$count_query_sql = "SELECT COUNT(*) AS total_transactions FROM transactions tr JOIN services s ON tr.service_id = s.service_id JOIN users bu ON tr.buyer_user_id = bu.user_id JOIN users se ON s.user_id = se.user_id";
 
-// Base query for fetching all sales data
+// The base query to get the actual data.
+// This one is a bit power, it joins the `users` table TWICE.
+// Once as `bu` (buyer user) to get the buyer's name.
+// Once as `se` (seller user) to get the seller's name.
 $data_query_sql = "SELECT tr.transaction_id, tr.price_at_purchase, tr.transaction_date, tr.status,
                            s.service_title,
                            bu.name as buyer_name, bu.email as buyer_email, bu.phone_number as buyer_phone,
@@ -91,6 +86,7 @@ $conditions = [];
 $params = [];
 $types = '';
 
+// For each filter, if it's not empty, we add a condition to the query.
 if (!empty($search_talent_title)) {
     $conditions[] = "s.service_title LIKE ?";
     $params[] = '%' . $search_talent_title . '%';
@@ -112,13 +108,15 @@ if (!empty($status_filter)) {
     $types .= 's';
 }
 
+// If there are any conditions, we add the WHERE clause to our SQL queries.
 if (!empty($conditions)) {
-    $count_query_sql .= " WHERE " . implode(" AND ", $conditions);
-    $data_query_sql .= " WHERE " . implode(" AND ", $conditions);
+    $where_clause = " WHERE " . implode(" AND ", $conditions);
+    $count_query_sql .= $where_clause;
+    $data_query_sql .= $where_clause;
 }
 
-$data_query_sql .= " ORDER BY tr.transaction_date DESC
-                     LIMIT ? OFFSET ?";
+// Add the ordering and pagination limit to the main data query.
+$data_query_sql .= " ORDER BY tr.transaction_date DESC LIMIT ? OFFSET ?";
 
 
 // Get total number of transactions for pagination
@@ -127,16 +125,15 @@ if (!empty($params)) {
     $count_stmt->bind_param($types, ...$params);
 }
 $count_stmt->execute();
-$total_transactions_result = $count_stmt->get_result();
-$total_transactions = $total_transactions_result->fetch_assoc()['total_transactions'] ?? 0;
+$total_transactions = $count_stmt->get_result()->fetch_assoc()['total_transactions'] ?? 0;
 $total_pages = ceil($total_transactions / $records_per_page);
 $count_stmt->close();
 
 
-// Fetch All Sales Transactions with pagination and search/filter
+// Fetch the actual sales data for the current page
 $all_sales_query = $conn->prepare($data_query_sql);
 if ($all_sales_query) {
-    // Add pagination parameters to the existing search parameters
+    // We combine the search params with the pagination params
     $pagination_params = array_merge($params, [$records_per_page, $offset]);
     $pagination_types = $types . 'ii'; // Add 'ii' for LIMIT and OFFSET
 
@@ -144,10 +141,7 @@ if ($all_sales_query) {
     $all_sales_query->execute();
     $all_sales_result = $all_sales_query->get_result();
     $all_sales_query->close();
-} else {
-    error_log("Failed to prepare statement for all sales reports (paginated with search): " . $conn->error);
 }
-
 ?>
 
 <body>
@@ -159,6 +153,7 @@ if ($all_sales_query) {
         </div>
 
         <div class="table-container" style="max-width: 1200px; margin: 30px auto; background-color: #fff; padding: 20px; border-radius: 10px;">
+            <!-- Show success/error message if got any -->
             <?php if (!empty($status_message)): ?>
                 <div style="text-align:center; margin-bottom:15px;">
                     <p style="color: green; font-weight: bold; background-color: #d4edda; border: 1px solid #c3e6cb; display: inline-block; padding: 10px 20px; border-radius: 8px;">
@@ -168,7 +163,7 @@ if ($all_sales_query) {
             <?php endif; ?>
 
             <a href="adminDashboard.php" class="form-button" style="width: auto; display: inline-block; margin-bottom: 20px; background-color: #6c757d;">&larr; Back to Admin Dashboard</a>
-            
+
             <!-- Search and Filter Form -->
             <form method="GET" action="adminTotalSales.php" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;">
                 <div style="flex: 1; min-width: 180px;">
@@ -213,31 +208,31 @@ if ($all_sales_query) {
                     </thead>
                     <tbody>
                         <?php while ($sale = $all_sales_result->fetch_assoc()): ?>
-                        <tr>
-                            <td style="padding: 10px;"><?= $sale['transaction_id'] ?></td>
-                            <td style="padding: 10px;"><?= htmlspecialchars($sale['service_title']) ?></td>
-                            <td style="padding: 10px;"><?= htmlspecialchars($sale['seller_name']) ?> <br> <small>(<?= htmlspecialchars($sale['seller_email']) ?>)</small> <br> <small>(<?= htmlspecialchars($sale['seller_phone'] ?? 'N/A') ?>)</small></td>
-                            <td style="padding: 10px;"><?= htmlspecialchars($sale['buyer_name']) ?> <br> <small>(<?= htmlspecialchars($sale['buyer_email']) ?>)</small> <br> <small>(<?= htmlspecialchars($sale['buyer_phone'] ?? 'N/A') ?>)</small></td>
-                            <td style="padding: 10px; text-align: right;"><?= number_format($sale['price_at_purchase'], 2) ?></td>
-                            <td style="padding: 10px; text-align: right;"><?= date('Y-m-d H:i', strtotime($sale['transaction_date'])) ?></td>
-                            <td style="padding: 10px; text-align: center;">
-                                <span style="padding: 5px 10px; border-radius: 5px; font-weight: bold; background-color: <?= ($sale['status'] == 'completed') ? '#d4edda; color: #155724;' : '#fff3cd; color: #856404;' ?>">
-                                    <?= ucfirst(htmlspecialchars($sale['status'])) ?>
-                                </span>
-                            </td>
-                            <td style="padding: 10px; text-align: center;">
-                                <?php if ($sale['status'] == 'pending'): ?>
-                                    <a href="?mark_as_completed=<?= $sale['transaction_id'] ?>&page=<?= $current_page ?><?= !empty($search_talent_title) ? '&talent_title=' . urlencode($search_talent_title) : '' ?><?= !empty($search_buyer_name) ? '&buyer_name=' . urlencode($search_buyer_name) : '' ?><?= !empty($search_seller_name) ? '&seller_name=' . urlencode($search_seller_name) : '' ?><?= !empty($status_filter) ? '&status_filter=' . urlencode($status_filter) : '' ?>" 
-                                       onclick="return confirm('Mark this order as completed?');" 
-                                       class="form-button" 
-                                       style="background-color: var(--color-primary); padding: 4px 8px; font-size: 0.8em; display: inline-block; width: auto;">
-                                        Mark Completed
-                                    </a>
-                                <?php else: ?>
-                                    —
-                                <?php endif; ?>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td style="padding: 10px;"><?= $sale['transaction_id'] ?></td>
+                                <td style="padding: 10px;"><?= htmlspecialchars($sale['service_title']) ?></td>
+                                <td style="padding: 10px;"><?= htmlspecialchars($sale['seller_name']) ?> <br> <small>(<?= htmlspecialchars($sale['seller_email']) ?>)</small></td>
+                                <td style="padding: 10px;"><?= htmlspecialchars($sale['buyer_name']) ?> <br> <small>(<?= htmlspecialchars($sale['buyer_email']) ?>)</small></td>
+                                <td style="padding: 10px; text-align: right;"><?= number_format($sale['price_at_purchase'], 2) ?></td>
+                                <td style="padding: 10px; text-align: right;"><?= date('Y-m-d H:i', strtotime($sale['transaction_date'])) ?></td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <span style="padding: 5px 10px; border-radius: 5px; font-weight: bold; background-color: <?= ($sale['status'] == 'completed') ? '#d4edda; color: #155724;' : '#fff3cd; color: #856404;' ?>">
+                                        <?= ucfirst(htmlspecialchars($sale['status'])) ?>
+                                    </span>
+                                </td>
+                                <td style="padding: 10px; text-align: center;">
+                                    <?php if ($sale['status'] == 'pending'): ?>
+                                        <a href="?mark_as_completed=<?= $sale['transaction_id'] ?>&page=<?= $current_page ?><?= !empty($search_talent_title) ? '&talent_title=' . urlencode($search_talent_title) : '' ?><?= !empty($search_buyer_name) ? '&buyer_name=' . urlencode($search_buyer_name) : '' ?><?= !empty($search_seller_name) ? '&seller_name=' . urlencode($search_seller_name) : '' ?><?= !empty($status_filter) ? '&status_filter=' . urlencode($status_filter) : '' ?>"
+                                           onclick="return confirm('Mark this order as completed?');"
+                                           class="form-button"
+                                           style="background-color: var(--color-primary); padding: 4px 8px; font-size: 0.8em; display: inline-block; width: auto;">
+                                            Mark Completed
+                                        </a>
+                                    <?php else: ?>
+                                        —
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
                         <?php endwhile; ?>
                     </tbody>
                 </table>
@@ -245,25 +240,25 @@ if ($all_sales_query) {
                 <!-- Pagination Links -->
                 <div style="text-align: center; margin-top: 20px;">
                     <?php if ($total_pages > 1): ?>
-                        <?php 
+                        <?php
                         $base_pagination_url = '?';
-                        if (!empty($search_talent_title)) $base_pagination_url .= '&talent_title=' . urlencode($search_talent_title);
-                        if (!empty($search_buyer_name)) $base_pagination_url .= '&buyer_name=' . urlencode($search_buyer_name);
-                        if (!empty($search_seller_name)) $base_pagination_url .= '&seller_name=' . urlencode($search_seller_name);
-                        if (!empty($status_filter)) $base_pagination_url .= '&status_filter=' . urlencode($status_filter);
+                        if (!empty($search_talent_title)) $base_pagination_url .= 'talent_title=' . urlencode($search_talent_title) . '&';
+                        if (!empty($search_buyer_name)) $base_pagination_url .= 'buyer_name=' . urlencode($search_buyer_name) . '&';
+                        if (!empty($search_seller_name)) $base_pagination_url .= 'seller_name=' . urlencode($search_seller_name) . '&';
+                        if (!empty($status_filter)) $base_pagination_url .= 'status_filter=' . urlencode($status_filter) . '&';
                         ?>
                         <?php if ($current_page > 1): ?>
-                            <a href="<?= $base_pagination_url ?>&page=<?= $current_page - 1 ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Previous</a>
+                            <a href="<?= $base_pagination_url ?>page=<?= $current_page - 1 ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Previous</a>
                         <?php endif; ?>
 
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <a href="<?= $base_pagination_url ?>&page=<?= $i ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; <?= ($i == $current_page) ? 'background-color: var(--color-primary);' : 'background-color: #ccc; color: #333;' ?>">
+                            <a href="<?= $base_pagination_url ?>page=<?= $i ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; <?= ($i == $current_page) ? 'background-color: var(--color-primary);' : 'background-color: #ccc; color: #333;' ?>">
                                 <?= $i ?>
                             </a>
                         <?php endfor; ?>
 
                         <?php if ($current_page < $total_pages): ?>
-                            <a href="<?= $base_pagination_url ?>&page=<?= $current_page + 1 ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Next</a>
+                            <a href="<?= $base_pagination_url ?>page=<?= $current_page + 1 ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Next</a>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>

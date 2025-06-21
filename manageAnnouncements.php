@@ -10,18 +10,23 @@ $successMessage = "";
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
 
-    // Remove image file (if any)
+    // First, get the image path from the database to delete the file
     $stmt_fetch_img = $conn->prepare("SELECT image_path FROM announcements WHERE id = ?");
     if ($stmt_fetch_img) {
         $stmt_fetch_img->bind_param("i", $id);
         $stmt_fetch_img->execute();
-        $old = $stmt_fetch_img->get_result()->fetch_assoc();
-        if (!empty($old['image_path']) && file_exists($old['image_path'])) {
-            unlink($old['image_path']);
+        $result = $stmt_fetch_img->get_result();
+        if ($old = $result->fetch_assoc()) {
+            // **FIX**: Construct the full path for the server to find the file
+            $file_to_delete = 'images/uploads/announcements/' . $old['image_path'];
+            if (!empty($old['image_path']) && file_exists($file_to_delete)) {
+                unlink($file_to_delete);
+            }
         }
         $stmt_fetch_img->close();
     }
 
+    // Now, delete the announcement record from the database
     $stmt_delete = $conn->prepare("DELETE FROM announcements WHERE id = ?");
     if ($stmt_delete) {
         $stmt_delete->bind_param("i", $id);
@@ -29,7 +34,6 @@ if (isset($_GET['delete'])) {
         $stmt_delete->close();
         $successMessage = "Announcement deleted successfully.";
     } else {
-        error_log("Failed to prepare delete statement for announcement: " . $conn->error);
         $successMessage = "Error deleting announcement.";
     }
 }
@@ -38,47 +42,42 @@ if (isset($_GET['delete'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_announcement'])) {
     $title   = trim($_POST['title']);
     $content = trim($_POST['content']);
-    $imgPath = null;
+    $imgFilename = null; // Initialize as null
 
-    /* uplodaing file */
+    /* uploading file */
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $tmp   = $_FILES['image']['tmp_name'];
         $name  = basename($_FILES['image']['name']);
-        $ext   = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-
-        $allowed = ['png','jpg','jpeg','gif'];
-        if (in_array($ext, $allowed) && $_FILES['image']['size'] <= 2*1024*1024) {     // ≤2 MB
-            $newName  = 'images/uploads/announcements/' . time() . '_' . preg_replace('/\s+/', '_', $name); // Updated path
-            // Ensure directory exists
-            if (!is_dir(dirname($newName))) {
-                mkdir(dirname($newName), 0755, true);
-            }
-            if (move_uploaded_file($tmp, $newName)) {
-                $imgPath = $newName;
-            } else {
-                $successMessage = "Error moving uploaded file.";
-            }
+        $upload_dir = 'images/uploads/announcements/';
+        
+        // Ensure directory exists
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        $newFilename = time() . '_' . preg_replace('/\s+/', '_', $name);
+        $destination = $upload_dir . $newFilename;
+        
+        if (move_uploaded_file($tmp, $destination)) {
+            // **FIX**: Store only the filename in the database, not the full path
+            $imgFilename = $newFilename; 
         } else {
-            $successMessage = "Invalid file type or size too large (max 2MB).";
+            $successMessage = "Error: Could not move the uploaded file.";
         }
     }
 
-    /* Insert */
-    if (empty($successMessage) || strpos($successMessage, "Error moving") !== false || strpos($successMessage, "Invalid file") !== false) { // Only proceed if no upload errors or specific upload errors
-        $stmt = $conn->prepare(
-            "INSERT INTO announcements (title, content, image_path) VALUES (?, ?, ?)"
-        );
+    /* Insert into database */
+    if (empty($successMessage)) {
+        $stmt = $conn->prepare("INSERT INTO announcements (title, content, image_path) VALUES (?, ?, ?)");
         if ($stmt) {
-            $stmt->bind_param("sss", $title, $content, $imgPath);
+            $stmt->bind_param("sss", $title, $content, $imgFilename);
             if ($stmt->execute()) {
                 $successMessage = "Announcement added successfully.";
             } else {
-                $successMessage = "Error adding announcement: " . $conn->error;
+                $successMessage = "Error adding announcement: " . $stmt->error;
             }
             $stmt->close();
         } else {
-            $successMessage = "Database error: Could not prepare statement for adding announcement.";
-            error_log("Failed to prepare statement for adding announcement: " . $conn->error);
+            $successMessage = "Database error: Could not prepare statement.";
         }
     }
 }
@@ -108,7 +107,7 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
 
     .announcement-form input[type="text"],
     .announcement-form textarea {
-        width: calc(100% - 20px); /* Account for padding */
+        width: 100%;
         padding: 10px;
         margin-bottom: 15px;
         border: 1px solid #ccc;
@@ -128,7 +127,7 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
         padding: 8px;
         border-radius: 5px;
         background-color: #f9f9f9;
-        width: calc(100% - 16px);
+        width: 100%;
         box-sizing: border-box;
     }
 
@@ -136,19 +135,9 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
         width: 100%;
         padding: 12px 20px;
         font-size: 1.1em;
-        background-color: var(--color-primary);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
     }
 
-    .announcement-form .form-button:hover {
-        background-color: #3b5f58;
-    }
-
-    /* Table Styling (similar to manageFAQ) */
+    /* Table Styling */
     .manage-table {
         width: 100%;
         border-collapse: collapse;
@@ -162,6 +151,7 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
         padding: 12px 15px;
         text-align: left;
         border-bottom: 1px solid #eee;
+        vertical-align: middle;
     }
 
     .manage-table thead tr {
@@ -181,8 +171,6 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
         max-width: 80px;
         height: auto;
         border-radius: 4px;
-        display: block;
-        margin: 0 auto;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
@@ -194,32 +182,23 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
         display: inline-block;
         margin: 2px;
         border-radius: 5px;
-        transition: background-color 0.2s ease;
     }
-
     .manage-table .form-button.red { background-color: #dc3545; }
-    .manage-table .form-button.green { background-color: #28a745; }
     .manage-table .form-button.orange { background-color: #ffc107; color: #333; }
-    .manage-table .form-button.blue { background-color: var(--color-primary); }
-
-    .manage-table .form-button.red:hover { background-color: #c82333; }
-    .manage-table .form-button.green:hover { background-color: #218838; }
-    .manage-table .form-button.orange:hover { background-color: #e0a800; }
-    .manage-table .form-button.blue:hover { background-color: #3b5f58; }
 
     /* Success Message Styling */
     .status-message {
         text-align: center;
-        margin-top: 20px;
+        margin: 20px auto;
         padding: 10px 20px;
         border-radius: 8px;
         font-weight: bold;
         background-color: #d4edda;
         color: #155724;
         border: 1px solid #c3e6cb;
+        max-width: 760px; /* Aligns with form container */
     }
 
-    /* Section Headings */
     h2 {
         color: var(--color-title);
         text-align: center;
@@ -237,23 +216,19 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
     <div class="form-container">
         <form method="POST" enctype="multipart/form-data" class="announcement-form">
             <input type="hidden" name="add_announcement" value="1">
-
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" required>
-
             <label for="content">Content:</label>
             <textarea id="content" name="content" rows="4" required></textarea>
-
             <label for="image">Image or Poster (size ≤ 2 MB):</label>
             <input type="file" id="image" name="image" accept=".png,.jpg,.jpeg,.gif">
-
             <button type="submit" class="form-button">Add Announcement</button>
         </form>
     </div>
 
     <?php if ($successMessage): ?>
         <div class="status-message">
-            <?= $successMessage ?>
+            <?= htmlspecialchars($successMessage) ?>
         </div>
     <?php endif; ?>
 
@@ -276,25 +251,19 @@ $announcements = $conn->query("SELECT * FROM announcements ORDER BY created_at D
                     <tr>
                         <td><?= $no++ ?></td>
                         <td><?= htmlspecialchars($row['title']) ?></td>
-                        <td><?= nl2br(htmlspecialchars($row['content'])) ?></td>
+                        <td><?= nl2br(htmlspecialchars(substr($row['content'], 0, 100))) . '...' ?></td>
                         <td>
-                            <?php if (!empty($row['image_path']) && file_exists($row['image_path'])): ?>
-                                <img src="<?= htmlspecialchars($row['image_path']) ?>" alt="Announcement Image">
+                            <?php if (!empty($row['image_path'])): ?>
+                                <!-- **FIX: Prepend the directory path to the filename from the DB ** -->
+                                <img src="images/uploads/announcements/<?= htmlspecialchars($row['image_path']) ?>" alt="Announcement Image">
                             <?php else: ?>
                                 —
                             <?php endif; ?>
                         </td>
                         <td><?= date('F j, Y', strtotime($row['created_at'])) ?></td>
                         <td>
-                            <a href="editAnnouncement.php?id=<?= $row['id'] ?>"
-                               class="form-button orange" style="margin-bottom:5px;">
-                               Edit
-                            </a>
-                            <a href="?delete=<?= $row['id'] ?>"
-                               onclick="return confirm('Are you sure you want to delete this announcement?')"
-                               class="form-button red">
-                               Delete
-                            </a>
+                            <a href="editAnnouncement.php?id=<?= $row['id'] ?>" class="form-button orange" style="margin-bottom:5px;">Edit</a>
+                            <a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Are you sure you want to delete this announcement?')" class="form-button red">Delete</a>
                         </td>
                     </tr>
                     <?php endwhile; ?>

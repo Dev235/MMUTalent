@@ -8,86 +8,97 @@ require 'connection.php';
 // Define the URL for the default profile picture
 define('DEFAULT_AVATAR_URL', 'https://placehold.co/150x150/EFEFEF/AAAAAA&text=No+Image');
 
-// Check if the user is logged in. If not, redirect to the login page.
+// --- CRITICAL: DETERMINE WHICH USER TO EDIT AND CHECK PERMISSIONS ---
+
+// Check if user is logged in at all
 if (!isset($_SESSION['user_id'])) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 
-// Set the page title and include the header.
-$page_title = "Edit Profile";
-require 'header.php';
+$current_user_id = $_SESSION['user_id'];
+$current_user_role = $_SESSION['role'] ?? 'student';
+$profile_id_to_edit = 0; // Initialize to 0
 
-// Get user ID from session.
-$user_id = $_SESSION['user_id'];
-$message = ''; // To store success or error messages.
-
-// Fetch the user's current data to get old profile picture info if needed.
-$stmt = $conn->prepare("SELECT profile_picture, name FROM users WHERE user_id = ?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$user_data = $stmt->get_result()->fetch_assoc();
-$old_profile_picture = $user_data['profile_picture'];
-$stmt->close();
-
-// Handle the form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // --- Handle Profile Picture Upload ---
-    $profile_picture_filename = $old_profile_picture; // Default to old picture
-    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
-        $upload_dir = 'images/uploads/profile_pictures/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
-        
-        $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
-        $file_type = $_FILES['profile_picture']['type'];
-        
-        if (in_array($file_type, $allowed_types)) {
-            $new_filename = uniqid() . '-' . basename($_FILES['profile_picture']['name']);
-            $upload_file = $upload_dir . $new_filename;
-
-            if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $upload_file)) {
-                $profile_picture_filename = $new_filename;
-                if (!empty($old_profile_picture) && file_exists($upload_dir . $old_profile_picture)) {
-                    unlink($upload_dir . $old_profile_picture);
-                }
-            } else {
-                $message = "Error uploading file.";
-            }
-        } else {
-            $message = "Invalid file type. Please upload a JPG, PNG, or GIF.";
-        }
-    }
-
-    // --- Handle Text Data Update ---
-    if (empty($message)) { 
-        $name = trim($_POST['name']);
-        $student_id = trim($_POST['student_id']);
-        $faculty = trim($_POST['faculty']);
-        $date_of_birth = trim($_POST['date_of_birth']);
-        $about_me = trim($_POST['about_me']);
-
-        $stmt = $conn->prepare("UPDATE users SET name = ?, student_id = ?, faculty = ?, date_of_birth = ?, about_me = ?, profile_picture = ? WHERE user_id = ?");
-        $stmt->bind_param("ssssssi", $name, $student_id, $faculty, $date_of_birth, $about_me, $profile_picture_filename, $user_id);
-
-        if ($stmt->execute()) {
-            $_SESSION['name'] = $name;
-            header("Location: userDashboard.php?status=success");
-            exit();
-        } else {
-            $message = "Error updating profile. Please try again.";
-        }
-        $stmt->close();
-    }
+// Determine which profile ID to edit based on role and URL parameters
+if ($current_user_role === 'admin' && isset($_GET['id'])) {
+    // If the user is an admin and an ID is provided, they are editing someone else.
+    $profile_id_to_edit = intval($_GET['id']);
+} else {
+    // Otherwise, users (including admins without a GET id) edit their own profile.
+    $profile_id_to_edit = $current_user_id;
 }
 
-// Fetch the user's most current data to pre-fill the form.
+// Security check: If a non-admin tries to edit another profile via URL, deny access.
+if ($current_user_role !== 'admin' && $profile_id_to_edit != $current_user_id) {
+    die("Access Denied: You do not have permission to edit this profile.");
+}
+
+
+// --- Fetch the correct user's data for the form ---
 $stmt = $conn->prepare("SELECT * FROM users WHERE user_id = ?");
-$stmt->bind_param("i", $user_id);
+$stmt->bind_param("i", $profile_id_to_edit);
 $stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
+$user_result = $stmt->get_result();
+$user = $user_result->fetch_assoc();
 $stmt->close();
+
+if (!$user) {
+    die("User not found.");
+}
+$old_profile_picture = $user['profile_picture'];
+
+
+// --- Handle the form submission ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $profile_picture_filename = $old_profile_picture;
+    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] == 0) {
+        $upload_dir = 'images/uploads/profile_pictures/';
+        if (!is_dir($upload_dir)) { mkdir($upload_dir, 0755, true); }
+        
+        $new_filename = uniqid() . '-' . basename($_FILES['profile_picture']['name']);
+        $upload_file = $upload_dir . $new_filename;
+
+        if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $upload_file)) {
+            $profile_picture_filename = $new_filename;
+            // Unlink old picture only if it's not the default one
+            if (!empty($old_profile_picture) && $old_profile_picture !== 'default_avatar.png' && file_exists($upload_dir . $old_profile_picture)) {
+                unlink($upload_dir . $old_profile_picture);
+            }
+        }
+    }
+
+    $name = trim($_POST['name']);
+    $student_id = trim($_POST['student_id']);
+    $faculty = trim($_POST['faculty']);
+    $date_of_birth = trim($_POST['date_of_birth']);
+    $about_me = trim($_POST['about_me']);
+
+    // The UPDATE query now uses the correct ID ($profile_id_to_edit)
+    $stmt = $conn->prepare("UPDATE users SET name = ?, student_id = ?, faculty = ?, date_of_birth = ?, about_me = ?, profile_picture = ? WHERE user_id = ?");
+    $stmt->bind_param("ssssssi", $name, $student_id, $faculty, $date_of_birth, $about_me, $profile_picture_filename, $profile_id_to_edit);
+
+    if ($stmt->execute()) {
+        // If user edited their own profile, update session name
+        if ($profile_id_to_edit == $current_user_id) {
+            $_SESSION['name'] = $name;
+        }
+        
+        // Smart Redirect
+        if ($current_user_role === 'admin' && $current_user_id != $profile_id_to_edit) {
+            header("Location: manageUsers.php?status=updated"); // Admin goes back to user list
+        } else {
+            header("Location: userDashboard.php?status=success"); // User goes back to their own dash
+        }
+        exit();
+    }
+    $stmt->close();
+}
+
+
+// Set the page title and include the header.
+$page_title = "Edit Profile: " . htmlspecialchars($user['name']);
+require 'header.php';
 
 // Determine the correct image source
 $profile_pic_src = DEFAULT_AVATAR_URL; 
@@ -102,19 +113,13 @@ if (!empty($user['profile_picture'])) {
 
     <div id="main-content">
         <div class="title-container">
-            <h1>Edit Your Profile</h1>
+            <h1>Edit Profile: <?php echo htmlspecialchars($user['name']); ?></h1>
             <p style="color: white;">Keep your talent profile up to date.</p>
         </div>
 
         <div class="profile-form-container" style="max-width: 800px; margin: 30px auto; background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
             
-            <?php if ($message): ?>
-                <div style="padding: 10px; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 20px;">
-                    <?php echo $message; ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" action="" enctype="multipart/form-data">
+            <form method="POST" action="editProfile.php?id=<?php echo $profile_id_to_edit; ?>" enctype="multipart/form-data">
                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
                     <div class="profile-pic-container" style="margin-right: 20px; text-align: center;">
                         <img src="<?php echo $profile_pic_src; ?>" alt="Profile Picture" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #ccc;">
@@ -150,7 +155,11 @@ if (!empty($user['profile_picture'])) {
 
                 <div class="form-actions" style="display: flex; gap: 10px;">
                     <button type="submit" class="form-button" style="flex: 1; background-color: var(--color-primary);">Save Changes</button>
-                    <a href="userDashboard.php" class="form-button" style="flex: 1; background-color: #6c757d; text-align: center; text-decoration: none; padding: 10px;">Cancel</a>
+                    
+                    <?php
+                        $cancel_url = ($current_user_role === 'admin' && $current_user_id != $profile_id_to_edit) ? 'manageUsers.php' : 'userDashboard.php';
+                    ?>
+                    <a href="<?php echo $cancel_url; ?>" class="form-button" style="flex: 1; background-color: #6c757d; text-align: center; text-decoration: none; padding: 10px;">Cancel</a>
                 </div>
             </form>
         </div>

@@ -1,55 +1,79 @@
 <?php
+// Standard stuff, need to connect to the database first.
 require 'connection.php';
+// This is for the tab title in the browser.
 $page_title = "Talent Catalogue";
 require 'header.php';
+// Gotta start the session to check if user is logged in or not.
 session_start();
 
 // --- PAGINATION LOGIC ---
-$limit = 8; // Number of talents per page (for a 4x2 grid)
+// This part is for the "Next Page" and "Previous Page" buttons.
+$limit = 8; // We want to show 8 talents per page. Can change this number if we want.
+// Check which page we are on. If the URL has `?page=2`, then $page will be 2.
+// If it's the first time loading, no `?page` in URL, so just assume it's page 1.
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+// This is the formula to calculate the starting point for the database query.
+// E.g., for Page 1, (1-1) * 8 = 0. Start from the 0th record.
+// For Page 2, (2-1) * 8 = 8. Start from the 8th record.
 $offset = ($page - 1) * $limit;
 
 // --- SEARCH & FILTER LOGIC ---
+// This part handles the search bar functionality.
 $search_query = isset($_GET['search']) ? trim($_GET['search']) : '';
+// This is the basic SQL to get data from two tables.
+// We need to JOIN `services` and `users` table so we can get the talent's name and the user's name together.
 $base_sql = "FROM services s JOIN users u ON s.user_id = u.user_id";
-$where_clause = "";
-$params = [];
-$types = '';
+$where_clause = ""; // This will be empty if there's no search.
+$params = []; // To store the search term securely.
+$types = ''; // To tell the database what type of data we are sending (s for string, i for integer).
 
+// If the user actually typed something in the search box...
 if (!empty($search_query)) {
+    // ...then we add this WHERE clause to the SQL query.
+    // The `LIKE ?` is a placeholder, to prevent SQL injection hack.
     $where_clause = " WHERE s.service_title LIKE ? OR s.service_description LIKE ?";
+    // The '%' is a wildcard. Means it will search for the word anywhere in the title or description.
     $search_param = '%' . $search_query . '%';
+    // Add the search term to our parameters array, twice because we have two `?`.
     $params[] = $search_param;
     $params[] = $search_param;
-    $types .= 'ss';
+    $types .= 'ss'; // Two strings, so 'ss'.
 }
 
 // --- DATABASE QUERIES ---
 
-// 1. Get the total number of talents for pagination
+// 1. Get the total number of talents for pagination.
+// We need to know the total number of pages to show, like "Page 1 of 5".
 $count_sql = "SELECT COUNT(*) as total " . $base_sql . $where_clause;
 $count_stmt = $conn->prepare($count_sql);
+// If there was a search, we need to bind the search parameters to the query.
 if (!empty($params)) {
     $count_stmt->bind_param($types, ...$params);
 }
 $count_stmt->execute();
 $total_talents = $count_stmt->get_result()->fetch_assoc()['total'];
+// `ceil` is to round up. E.g., if we have 17 talents, 17/8 = 2.125, so ceil makes it 3 pages.
 $total_pages = ceil($total_talents / $limit);
 $count_stmt->close();
 
-// 2. Get the talents for the current page
+// 2. Get the actual talents for the current page.
+// This is the main query to fetch the data we want to display.
+// We add `LIMIT ? OFFSET ?` at the end for the pagination.
 $talents_sql = "SELECT s.service_id, s.service_title, s.service_description, s.service_image, u.name as user_name " . $base_sql . $where_clause . " ORDER BY s.service_title ASC LIMIT ? OFFSET ?";
-$types .= 'ii';
+$types .= 'ii'; // Add 'ii' for the two integers (limit and offset).
 $params[] = $limit;
 $params[] = $offset;
 
 $stmt = $conn->prepare($talents_sql);
+// This `...$params` is a "splat operator", it's a cool way to pass the array elements as individual arguments.
 $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $talents_result = $stmt->get_result();
 
 ?>
 <style>
+    /* These styles are just to make the page look nice lah */
     .catalogue-section { padding: 50px 20px; max-width: 1200px; margin: 0 auto; }
     .catalogue-header { text-align: center; margin-bottom: 40px; color: white; }
     .search-filter-container { background-color: #fff; padding: 20px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
@@ -117,7 +141,7 @@ $talents_result = $stmt->get_result();
                         </div>
                     <?php endwhile; ?>
                 <?php else: ?>
-                    <p style="text-align: center; width: 100%; color: white; grid-column: 1 / -1;">No talents found matching your criteria.</p>
+                    <p style="text-align: center; width: 100%; color: white; grid-column: 1 / -1;">Aiyo, no talents found la matching your search.</p>
                 <?php endif; ?>
             </div>
 

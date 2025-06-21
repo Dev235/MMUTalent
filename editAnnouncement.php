@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<div id="main-content" style="padding:40px;">
+<div id="main-content" >
     <div class="title-container"><h1>Edit Announcement</h1></div>
 
     <?php if ($error): ?>

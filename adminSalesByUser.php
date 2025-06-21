@@ -1,8 +1,9 @@
 <?php
+// Same as always, session start and database connection are a must.
 session_start();
 require 'connection.php';
 
-// Security check: Ensure user is logged in and is an admin
+// Security check, must be admin. If not, go back to login page.
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit();
@@ -11,19 +12,27 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 $page_title = "Sales by User";
 require 'header.php';
 
+// --- Pagination stuff ---
 $records_per_page = 15;
 $current_page = isset($_GET['page']) && is_numeric($_GET['page']) ? intval($_GET['page']) : 1;
 $offset = ($current_page - 1) * $records_per_page;
 
+// Get the search term from the URL if there is one.
 $search_seller_name = isset($_GET['seller_name']) ? trim($_GET['seller_name']) : '';
 
-// Base query for counting total sellers (for pagination)
+// --- Building the SQL Queries ---
+// This page is a bit different. We want to show the TOTAL sales for each user.
+// So we use GROUP BY and SUM().
+
+// First, the query to count the total number of unique sellers.
 $count_query_sql = "SELECT COUNT(DISTINCT s.user_id) AS total_sellers
                     FROM transactions tr
                     JOIN services s ON tr.service_id = s.service_id
                     JOIN users u ON s.user_id = u.user_id";
 
-// Base query for fetching sales data
+// Second, the query to get the actual data.
+// `SUM(tr.price_at_purchase)` adds up all the sales for one user.
+// `GROUP BY u.user_id, u.name` tells the database to group all rows with the same user_id together and sum up their prices.
 $data_query_sql = "SELECT u.user_id, u.name AS seller_name, SUM(tr.price_at_purchase) AS user_total_revenue
                    FROM transactions tr
                    JOIN services s ON tr.service_id = s.service_id
@@ -32,15 +41,16 @@ $data_query_sql = "SELECT u.user_id, u.name AS seller_name, SUM(tr.price_at_purc
 $params = [];
 $types = '';
 
-// Add search condition if search_seller_name is provided
+// Add the search condition if the admin is searching for a specific seller.
 if (!empty($search_seller_name)) {
-    $count_query_sql .= " WHERE u.name LIKE ?";
-    $data_query_sql .= " WHERE u.name LIKE ?";
-    $search_param = '%' . $search_seller_name . '%';
-    $params[] = $search_param;
+    $where_clause = " WHERE u.name LIKE ?";
+    $count_query_sql .= $where_clause;
+    $data_query_sql .= $where_clause;
+    $params[] = '%' . $search_seller_name . '%';
     $types .= 's';
 }
 
+// Add the GROUP BY, ORDER BY, and LIMIT clauses to the main data query.
 $data_query_sql .= " GROUP BY u.user_id, u.name
                      ORDER BY user_total_revenue DESC
                      LIMIT ? OFFSET ?";
@@ -52,16 +62,15 @@ if (!empty($search_seller_name)) {
     $count_stmt->bind_param($types, ...$params);
 }
 $count_stmt->execute();
-$total_sellers_result = $count_stmt->get_result();
-$total_sellers = $total_sellers_result->fetch_assoc()['total_sellers'] ?? 0;
+$total_sellers = $count_stmt->get_result()->fetch_assoc()['total_sellers'] ?? 0;
 $total_pages = ceil($total_sellers / $records_per_page);
 $count_stmt->close();
 
 
-// Fetch Sales Revenue Per User (Seller) with pagination and search
+// Fetch the sales data per user for the current page
 $sales_per_user_query = $conn->prepare($data_query_sql);
 if ($sales_per_user_query) {
-    // Add pagination parameters to the existing search parameters
+    // Combine the search params with the pagination params
     $pagination_params = array_merge($params, [$records_per_page, $offset]);
     $pagination_types = $types . 'ii'; // Add 'ii' for LIMIT and OFFSET
 
@@ -69,10 +78,7 @@ if ($sales_per_user_query) {
     $sales_per_user_query->execute();
     $sales_per_user_result = $sales_per_user_query->get_result();
     $sales_per_user_query->close();
-} else {
-    error_log("Failed to prepare statement for sales per user (paginated with search): " . $conn->error);
 }
-
 ?>
 
 <body>
@@ -86,7 +92,7 @@ if ($sales_per_user_query) {
         <div class="table-container" style="max-width: 1000px; margin: 30px auto; background-color: #fff; padding: 20px; border-radius: 10px;">
             <a href="adminDashboard.php" class="form-button" style="width: auto; display: inline-block; margin-bottom: 20px; background-color: #6c757d;">&larr; Back to Admin Dashboard</a>
 
-            <!-- Search Form -->
+            <!-- Search Form. -->
             <form method="GET" action="adminSalesByUser.php" style="margin-bottom: 20px; display: flex; gap: 10px;">
                 <input type="text" name="seller_name" placeholder="Search by Seller Name" value="<?= htmlspecialchars($search_seller_name) ?>" style="flex-grow: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
                 <button type="submit" class="form-button" style="width: auto; padding: 8px 15px;">Search</button>
@@ -118,18 +124,22 @@ if ($sales_per_user_query) {
                 <!-- Pagination Links -->
                 <div style="text-align: center; margin-top: 20px;">
                     <?php if ($total_pages > 1): ?>
+                        <?php
+                        $base_pagination_url = '?';
+                        if (!empty($search_seller_name)) $base_pagination_url .= 'seller_name=' . urlencode($search_seller_name) . '&';
+                        ?>
                         <?php if ($current_page > 1): ?>
-                            <a href="?page=<?= $current_page - 1 ?><?= !empty($search_seller_name) ? '&seller_name=' . urlencode($search_seller_name) : '' ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Previous</a>
+                            <a href="<?= $base_pagination_url ?>page=<?= $current_page - 1 ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Previous</a>
                         <?php endif; ?>
 
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                            <a href="?page=<?= $i ?><?= !empty($search_seller_name) ? '&seller_name=' . urlencode($search_seller_name) : '' ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; <?= ($i == $current_page) ? 'background-color: var(--color-primary);' : 'background-color: #ccc; color: #333;' ?>">
+                            <a href="<?= $base_pagination_url ?>page=<?= $i ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; <?= ($i == $current_page) ? 'background-color: var(--color-primary);' : 'background-color: #ccc; color: #333;' ?>">
                                 <?= $i ?>
                             </a>
                         <?php endfor; ?>
 
                         <?php if ($current_page < $total_pages): ?>
-                            <a href="?page=<?= $current_page + 1 ?><?= !empty($search_seller_name) ? '&seller_name=' . urlencode($search_seller_name) : '' ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Next</a>
+                            <a href="<?= $base_pagination_url ?>page=<?= $current_page + 1 ?>" class="form-button" style="width: auto; display: inline-block; margin: 5px; background-color: #6c757d;">Next</a>
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>

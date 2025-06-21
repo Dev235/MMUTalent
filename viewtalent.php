@@ -14,13 +14,18 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 // Sanitize the ID and fetch the talent details along with the owner's info using a JOIN.
 $talent_id = intval($_GET['id']);
 
+//prepare the sql statement to prevent sql injection (Input sanitization)
 $stmt = $conn->prepare(
     "SELECT s.service_title, s.service_description, s.service_image, s.service_price, u.name as user_name, u.profile_picture, u.user_id 
      FROM services s 
      JOIN users u ON s.user_id = u.user_id 
      WHERE s.service_id = ?"
 );
+
+//bind the parameter to the prepared statement, type i means it is integer and it will binding that variable to the statement.
 $stmt->bind_param("i", $talent_id);
+
+// eecute the statement and fetch the result.
 $stmt->execute();
 $result = $stmt->get_result();
 $talent = $result->fetch_assoc();
@@ -73,32 +78,35 @@ if (isset($_GET['error'])) {
         </div>
 
         <div class="talent-detail-container" style="max-width: 900px; margin: 30px auto; background-color: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-            
+            <!-- Back button -->
             <a href="#" onclick="history.go(-1); return false;" class="form-button" style="width: auto; padding: 10px 20px; background-color: #6c757d; display: inline-block; margin-bottom: 20px;">&larr; Back</a>
-            
-            <img src="<?php echo $talent_image_src; ?>" alt="<?php echo htmlspecialchars($talent['service_title']); ?>" style="width: 100%; height: auto; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
 
+            <img src="<?php echo $talent_image_src; ?>" alt="<?php echo htmlspecialchars($talent['service_title']); ?>" style="width: 100%; height: auto; max-height: 400px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">
+            <!-- Talent Title and Price -->
             <section id="talent-description">
                 <h2 style="color: var(--color-title); border-bottom: 2px solid var(--color-surface); padding-bottom: 10px;">About this Talent</h2>
                 <p style="line-height: 1.6;">
                     <?php echo nl2br(htmlspecialchars($talent['service_description'])); ?>
                 </p>
             </section>
-            
+
             <section id="add-to-cart" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
                 <?php if (!empty($error_message)): ?>
                     <div style="text-align: center; background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
                         <p style="margin: 0; font-size: 1.1em;"><?php echo $error_message; ?></p>
                     </div>
                 <?php endif; ?>
-
+                <!-- Add to Cart Section 
+if its an admin, show error message saying they cannot use the shopping cart functionality
+if its the user who created the talent, show error message saying they cannot purchase their own talent 
+-->
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <?php if ($_SESSION['user_id'] == $talent['user_id']): ?>
                         <div style="text-align: center; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
                             <p style="margin: 0; font-size: 1.1em; color: var(--color-title);">You cannot purchase your own talent.</p>
                         </div>
                     <?php elseif ($_SESSION['role'] === 'admin'): ?>
-                         <!-- Message displayed by the error_message check above -->
+                        <!-- Message displayed by the error_message check above -->
                         <div style="text-align: center; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
                             <p style="margin: 0; font-size: 1.1em; color: var(--color-title);">Administrators cannot use the shopping cart functionality.</p>
                         </div>
@@ -134,4 +142,5 @@ if (isset($_GET['error'])) {
 
     <?php require 'footer.php'; ?>
 </body>
+
 </html>
