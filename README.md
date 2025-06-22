@@ -1,6 +1,6 @@
 # 
 
-Additional Features
+# Additional Features
 1. Dynamic User Profile System
 
 Created userDashboard.php:
