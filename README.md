@@ -1,6 +1,8 @@
-# 
+# MMU Got Talent!
 
-# Additional Features
+*Please make sure you have xampp apache and MYSQL enable inorder to access this web application*
+
+
 1. Dynamic User Profile System
 
 Created userDashboard.php:
