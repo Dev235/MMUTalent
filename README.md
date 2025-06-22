@@ -30,7 +30,7 @@
 - **News Page:** Displays updates posted by admins.
 - **Forum:** Participate in discussions and share ideas.
 
-## Aditional Feature 
+## Aditional Features
 - Password Hashing
 - Input Validation
 - SQL Injection Prevention
