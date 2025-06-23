@@ -4,12 +4,19 @@ $page_title = "Edit Announcement";
 require 'header.php';
 require 'navbar.php';
 
-$error = "";
+/* ─────────────────────────────────────────────────────────────
+   Configuration
+   ───────────────────────────────────────────────────────────── */
+$upload_dir = 'images/uploads/announcements/';   // trailing “/” required
+$max_size    = 2 * 1024 * 1024;                  // 2 MB
+$allowed_ext = ['png', 'jpg', 'jpeg', 'gif'];
+
+$error        = "";
 $announcement = null;
 
-/* ── 1. FETCH ───────────────────────────────────────────── */
+/* ── 1. FETCH the record to edit ───────────────────────────── */
 if (isset($_GET['id'])) {
-    $id = intval($_GET['id']);
+    $id   = (int) $_GET['id'];
     $stmt = $conn->prepare("SELECT * FROM announcements WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
@@ -21,80 +28,102 @@ if (isset($_GET['id'])) {
     $error = "No ID specified.";
 }
 
-/* ── 2. UPDATE ──────────────────────────────────────────── */
+/* ── 2. UPDATE on POST ─────────────────────────────────────── */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id      = intval($_POST['id']);
+
+    /* 2a │ gather basic fields */
+    $id      = (int) $_POST['id'];
     $title   = trim($_POST['title']);
     $content = trim($_POST['content']);
 
-    /* 2a │ handle new image (optional) */
-    $newPath = $announcement['image_path'];    // default = keep old
-    $remove  = isset($_POST['remove_image']);  // checkbox
+    /* 2b │ start with the existing image filename (or null) */
+    $fileName = $announcement['image_path'] ?? null;
 
-    if ($remove) {
-        // delete old file
-        if (!empty($newPath) && file_exists($newPath)) unlink($newPath);
-        $newPath = null;
+    /* 2c │ handle “remove image” checkbox */
+    if (isset($_POST['remove_image']) && $fileName) {
+        $old = $upload_dir . $fileName;
+        if (file_exists($old)) unlink($old);
+        $fileName = null;
     }
 
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $tmp   = $_FILES['image']['tmp_name'];
-        $name  = basename($_FILES['image']['name']);
-        $ext   = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        $okExt = ['png','jpg','jpeg','gif'];
+    /* 2d │ handle new upload (if any) */
+    if (!empty($_FILES['image']['name']) &&
+        $_FILES['image']['error'] === UPLOAD_ERR_OK) {
 
-        if (in_array($ext, $okExt) && $_FILES['image']['size'] <= 2*1024*1024) {
-            // delete old file if replacing
-            if (!empty($newPath) && file_exists($newPath)) unlink($newPath);
+        $tmp  = $_FILES['image']['tmp_name'];
+        $orig = basename($_FILES['image']['name']);
+        $ext  = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
 
-            $newPath = 'uploads/' . time() . '_' . preg_replace('/\s+/', '_', $name);
-            move_uploaded_file($tmp, $newPath);
+        if (!in_array($ext, $allowed_ext)) {
+            $error = "Invalid file type.";
+        } elseif ($_FILES['image']['size'] > $max_size) {
+            $error = "Image exceeds 2 MB limit.";
+        } else {
+            /* create folder on first use */
+            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
+
+            /* delete any previous image */
+            if ($fileName && file_exists($upload_dir.$fileName)) {
+                unlink($upload_dir.$fileName);
+            }
+
+            /* generate unique filename, move file */
+            $fileName = time() . '_' . preg_replace('/\s+/', '_', $orig);
+            move_uploaded_file($tmp, $upload_dir.$fileName);
         }
     }
 
-    /* 2b │ update row */
-    $stmt = $conn->prepare(
-        "UPDATE announcements
-         SET title = ?, content = ?, image_path = ?
-         WHERE id = ?"
-    );
-    $stmt->bind_param("sssi", $title, $content, $newPath, $id);
+    /* 2e │ update DB if no validation error so far */
+    if ($error === "") {
+        $stmt = $conn->prepare(
+            "UPDATE announcements
+             SET title = ?, content = ?, image_path = ?
+             WHERE id = ?"
+        );
+        $stmt->bind_param("sssi", $title, $content, $fileName, $id);
 
-    if ($stmt->execute()) {
-        header("Location: manageAnnouncements.php");
-        exit;
-    } else {
+        if ($stmt->execute()) {
+            header("Location: manageAnnouncements.php");
+            exit;
+        }
         $error = "Update failed. Please try again.";
+        $stmt->close();
     }
+
+    /* 2f │ keep latest data in $announcement for redisplay */
+    $announcement['title']       = $title;
+    $announcement['content']     = $content;
+    $announcement['image_path']  = $fileName;
 }
 ?>
 
-<div id="main-content" >
+<div id="main-content">
     <div class="title-container"><h1>Edit Announcement</h1></div>
 
     <?php if ($error): ?>
-        <p style="color:red;text-align:center;"><?= $error ?></p>
+        <p style="color:red;text-align:center;"><?= htmlspecialchars($error) ?></p>
     <?php elseif ($announcement): ?>
         <form method="POST" enctype="multipart/form-data"
               style="max-width:600px;margin:0 auto;background:#fff;
                      padding:20px;border-radius:8px;">
+
             <input type="hidden" name="id" value="<?= $announcement['id'] ?>">
 
+            <!-- Title -->
             <label>Title:</label>
             <input type="text" name="title" required
                    value="<?= htmlspecialchars($announcement['title']) ?>"
                    style="width:95%;padding:10px;margin-bottom:10px;">
 
+            <!-- Content -->
             <label>Content:</label>
             <textarea name="content" rows="4" required
-                      style="width:95%;padding:10px;">
-                <?= htmlspecialchars($announcement['content']) ?>
-            </textarea>
+                      style="width:95%;padding:10px;"><?= htmlspecialchars($announcement['content']) ?></textarea>
 
-            <!-- ── Current image preview ── -->
+            <!-- Current image preview -->
             <?php if (!empty($announcement['image_path'])): ?>
                 <p>Current image:</p>
-                <img src="<?= htmlspecialchars($announcement['image_path']) ?>"
+                <img src="<?= $upload_dir . htmlspecialchars($announcement['image_path']) ?>"
                      alt="current image"
                      style="max-width:100%;height:auto;margin-bottom:10px;border-radius:6px;">
                 <div style="margin-bottom:10px;">
@@ -105,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
-            <!-- ── New image upload ── -->
+            <!-- New image -->
             <label>Upload new image (optional):</label>
             <input type="file" name="image" accept=".png,.jpg,.jpeg,.gif"
                    style="margin-bottom:15px;">
